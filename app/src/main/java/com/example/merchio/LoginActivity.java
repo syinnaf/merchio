@@ -28,6 +28,7 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         dbHelper = new DbHelper(this);
+        dbHelper.getWritableDatabase();
         sessionManager = new SessionManager(this);
 
         edtEmailLogin = findViewById(R.id.edtEmailLogin);

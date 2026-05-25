@@ -100,6 +100,10 @@ public class RegisterActivity extends AppCompatActivity {
         // Karena form kamu belum punya field name, sementara name diisi sama dengan username.
         boolean success = dbHelper.insertUser(username, username, email, password);
 
+        Toast.makeText(this,
+                "Insert result: " + success,
+                Toast.LENGTH_LONG).show();
+
         if (success) {
             Toast.makeText(this, "Register berhasil, silakan login", Toast.LENGTH_SHORT).show();
 
