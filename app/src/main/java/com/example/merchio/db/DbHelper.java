@@ -14,7 +14,7 @@ import java.util.Locale;
 public class DbHelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "merchio.db";
-    public static final int DATABASE_VERSION = 2;
+    public static final int DATABASE_VERSION = 3;
 
     public DbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -26,121 +26,157 @@ public class DbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+        createUsersTable(db);
+        createCartTable(db);
+        createWishlistTable(db);
+        createAddressesTable(db);
+        createOrdersTable(db);
+        createOrderItemsTable(db);
+        createRecentSearchesTable(db);
+        createSettingsTable(db);
+    }
 
-        String createUsers = "CREATE TABLE users (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "name TEXT, " +
-                "username TEXT, " +
-                "email TEXT UNIQUE, " +
-                "password TEXT, " +
-                "phone TEXT, " +
-                "avatar TEXT, " +
-                "header TEXT, " +
-                "created_at TEXT" +
-                ")";
+    private void createUsersTable(SQLiteDatabase db) {
+        db.execSQL(
+                "CREATE TABLE users (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "name TEXT, " +
+                        "username TEXT, " +
+                        "email TEXT UNIQUE, " +
+                        "password TEXT, " +
+                        "phone TEXT, " +
+                        "avatar TEXT, " +
+                        "header TEXT, " +
+                        "created_at TEXT" +
+                        ")"
+        );
+    }
 
-        String createCart = "CREATE TABLE cart (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "user_id INTEGER, " +
-                "product_id TEXT, " +
-                "product_name TEXT, " +
-                "product_image TEXT, " +
-                "product_price INTEGER, " +
-                "type TEXT, " +
-                "quantity INTEGER, " +
-                "stock INTEGER, " +
-                "is_checked INTEGER DEFAULT 0, " +
-                "created_at TEXT" +
-                ")";
+    private void createCartTable(SQLiteDatabase db) {
+        db.execSQL(
+                "CREATE TABLE cart (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "user_id INTEGER, " +
+                        "product_id TEXT, " +
+                        "product_name TEXT, " +
+                        "product_image TEXT, " +
+                        "product_price INTEGER, " +
+                        "type TEXT, " +
+                        "quantity INTEGER, " +
+                        "stock INTEGER, " +
+                        "is_checked INTEGER DEFAULT 0, " +
+                        "created_at TEXT" +
+                        ")"
+        );
+    }
 
-        String createWishlist = "CREATE TABLE wishlist (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "user_id INTEGER, " +
-                "product_id TEXT, " +
-                "product_name TEXT, " +
-                "product_image TEXT, " +
-                "product_price INTEGER, " +
-                "type TEXT, " +
-                "created_at TEXT" +
-                ")";
+    private void createWishlistTable(SQLiteDatabase db) {
+        db.execSQL(
+                "CREATE TABLE wishlist (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "user_id INTEGER, " +
+                        "product_id TEXT, " +
+                        "product_name TEXT, " +
+                        "product_image TEXT, " +
+                        "product_price INTEGER, " +
+                        "type TEXT, " +
+                        "created_at TEXT" +
+                        ")"
+        );
+    }
 
-        String createOrders = "CREATE TABLE orders (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "user_id INTEGER, " +
-                "order_code TEXT, " +
-                "total_price INTEGER, " +
-                "shipping_price INTEGER, " +
-                "tax INTEGER, " +
-                "payment_method TEXT, " +
-                "shipping_method TEXT, " +
-                "address TEXT, " +
-                "status TEXT, " +
-                "order_date TEXT, " +
-                "estimated_arrival TEXT" +
-                ")";
+    private void createAddressesTable(SQLiteDatabase db) {
+        db.execSQL(
+                "CREATE TABLE addresses (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "user_id INTEGER, " +
+                        "recipient_name TEXT, " +
+                        "phone TEXT, " +
+                        "address TEXT, " +
+                        "city TEXT, " +
+                        "postal_code TEXT, " +
+                        "is_default INTEGER DEFAULT 0" +
+                        ")"
+        );
+    }
 
-        String createOrderItems = "CREATE TABLE order_items (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "order_id INTEGER, " +
-                "product_id TEXT, " +
-                "product_name TEXT, " +
-                "product_image TEXT, " +
-                "price INTEGER, " +
-                "quantity INTEGER, " +
-                "type TEXT" +
-                ")";
+    private void createOrdersTable(SQLiteDatabase db) {
+        db.execSQL(
+                "CREATE TABLE orders (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "user_id INTEGER, " +
+                        "order_code TEXT, " +
+                        "total_price INTEGER, " +
+                        "shipping_price INTEGER, " +
+                        "tax INTEGER, " +
+                        "payment_method TEXT, " +
+                        "shipping_method TEXT, " +
+                        "address_id INTEGER, " +
+                        "address TEXT, " +
+                        "status TEXT, " +
+                        "order_date TEXT, " +
+                        "estimated_arrival TEXT" +
+                        ")"
+        );
+    }
 
-        String createAddresses = "CREATE TABLE addresses (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "user_id INTEGER, " +
-                "recipient_name TEXT, " +
-                "phone TEXT, " +
-                "address TEXT, " +
-                "city TEXT, " +
-                "postal_code TEXT, " +
-                "is_default INTEGER DEFAULT 0" +
-                ")";
+    private void createOrderItemsTable(SQLiteDatabase db) {
+        db.execSQL(
+                "CREATE TABLE order_items (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "order_id INTEGER, " +
+                        "product_id TEXT, " +
+                        "product_name TEXT, " +
+                        "product_image TEXT, " +
+                        "price INTEGER, " +
+                        "quantity INTEGER, " +
+                        "type TEXT" +
+                        ")"
+        );
+    }
 
-        String createRecentSearches = "CREATE TABLE recent_searches (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "user_id INTEGER, " +
-                "keyword TEXT, " +
-                "created_at TEXT" +
-                ")";
+    private void createRecentSearchesTable(SQLiteDatabase db) {
+        db.execSQL(
+                "CREATE TABLE recent_searches (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "user_id INTEGER, " +
+                        "keyword TEXT, " +
+                        "created_at TEXT" +
+                        ")"
+        );
+    }
 
-        String createSettings = "CREATE TABLE settings (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "user_id INTEGER, " +
-                "dark_mode INTEGER DEFAULT 0, " +
-                "notification_enabled INTEGER DEFAULT 1, " +
-                "selected_theme TEXT" +
-                ")";
-
-        db.execSQL(createUsers);
-        db.execSQL(createCart);
-        db.execSQL(createWishlist);
-        db.execSQL(createOrders);
-        db.execSQL(createOrderItems);
-        db.execSQL(createAddresses);
-        db.execSQL(createRecentSearches);
-        db.execSQL(createSettings);
+    private void createSettingsTable(SQLiteDatabase db) {
+        db.execSQL(
+                "CREATE TABLE settings (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "user_id INTEGER, " +
+                        "dark_mode INTEGER DEFAULT 0, " +
+                        "notification_enabled INTEGER DEFAULT 1, " +
+                        "selected_theme TEXT" +
+                        ")"
+        );
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS users");
-        db.execSQL("DROP TABLE IF EXISTS cart");
-        db.execSQL("DROP TABLE IF EXISTS wishlist");
-        db.execSQL("DROP TABLE IF EXISTS orders");
-        db.execSQL("DROP TABLE IF EXISTS order_items");
-        db.execSQL("DROP TABLE IF EXISTS addresses");
-        db.execSQL("DROP TABLE IF EXISTS recent_searches");
-        db.execSQL("DROP TABLE IF EXISTS settings");
+        dropAllTables(db);
         onCreate(db);
     }
 
+    private void dropAllTables(SQLiteDatabase db) {
+        db.execSQL("DROP TABLE IF EXISTS order_items");
+        db.execSQL("DROP TABLE IF EXISTS orders");
+        db.execSQL("DROP TABLE IF EXISTS cart");
+        db.execSQL("DROP TABLE IF EXISTS wishlist");
+        db.execSQL("DROP TABLE IF EXISTS addresses");
+        db.execSQL("DROP TABLE IF EXISTS recent_searches");
+        db.execSQL("DROP TABLE IF EXISTS settings");
+        db.execSQL("DROP TABLE IF EXISTS users");
+    }
+
     // =========================================================
-    // USERS: REGISTER & LOGIN
+    // USERS
     // =========================================================
 
     public boolean insertUser(String name, String username, String email, String password) {
@@ -179,6 +215,10 @@ public class DbHelper extends SQLiteOpenHelper {
         return exists;
     }
 
+    public boolean checkUser(String email, String password) {
+        return loginUser(email, password) != -1;
+    }
+
     public int loginUser(String email, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -206,7 +246,23 @@ public class DbHelper extends SQLiteOpenHelper {
         );
     }
 
-    public boolean updateUserProfile(int userId, String name, String username, String phone, String avatar, String header) {
+    public Cursor getUserByEmail(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        return db.rawQuery(
+                "SELECT * FROM users WHERE email = ?",
+                new String[]{email}
+        );
+    }
+
+    public boolean updateUserProfile(
+            int userId,
+            String name,
+            String username,
+            String phone,
+            String avatar,
+            String header
+    ) {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
@@ -227,8 +283,21 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     // =========================================================
-    // CART CRUD
+    // CART
     // =========================================================
+
+    public boolean insertCartItem(
+            int userId,
+            String productId,
+            String productName,
+            String productImage,
+            int productPrice,
+            String type,
+            int quantity,
+            int stock
+    ) {
+        return addToCart(userId, productId, productName, productImage, productPrice, type, quantity, stock);
+    }
 
     public boolean addToCart(
             int userId,
@@ -263,6 +332,14 @@ public class DbHelper extends SQLiteOpenHelper {
 
         cursor.close();
 
+        if (quantity < 1) {
+            quantity = 1;
+        }
+
+        if (quantity > stock) {
+            quantity = stock;
+        }
+
         ContentValues values = new ContentValues();
         values.put("user_id", userId);
         values.put("product_id", productId);
@@ -288,6 +365,10 @@ public class DbHelper extends SQLiteOpenHelper {
         );
     }
 
+    public Cursor getCartItemsByUserId(int userId) {
+        return getCartByUser(userId);
+    }
+
     public Cursor getCheckedCartByUser(int userId) {
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -304,6 +385,23 @@ public class DbHelper extends SQLiteOpenHelper {
             return deleteCartItem(cartId);
         }
 
+        Cursor cursor = db.rawQuery(
+                "SELECT stock FROM cart WHERE id = ?",
+                new String[]{String.valueOf(cartId)}
+        );
+
+        if (!cursor.moveToFirst()) {
+            cursor.close();
+            return false;
+        }
+
+        int stock = cursor.getInt(cursor.getColumnIndexOrThrow("stock"));
+        cursor.close();
+
+        if (quantity > stock) {
+            quantity = stock;
+        }
+
         ContentValues values = new ContentValues();
         values.put("quantity", quantity);
 
@@ -315,6 +413,10 @@ public class DbHelper extends SQLiteOpenHelper {
         );
 
         return result > 0;
+    }
+
+    public boolean updateCartQty(int cartId, int quantity) {
+        return updateCartQuantity(cartId, quantity);
     }
 
     public boolean updateCartChecked(int cartId, boolean isChecked) {
@@ -409,8 +511,24 @@ public class DbHelper extends SQLiteOpenHelper {
         return result > 0;
     }
 
+    public boolean deleteCheckedCartItems(int userId) {
+        return clearCheckedCart(userId);
+    }
+
+    public boolean clearCartByUser(int userId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        int result = db.delete(
+                "cart",
+                "user_id = ?",
+                new String[]{String.valueOf(userId)}
+        );
+
+        return result > 0;
+    }
+
     // =========================================================
-    // WISHLIST CRUD
+    // WISHLIST
     // =========================================================
 
     public boolean addToWishlist(
@@ -488,7 +606,7 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     // =========================================================
-    // ADDRESSES CRUD
+    // ADDRESSES
     // =========================================================
 
     public boolean insertAddress(
@@ -528,6 +646,19 @@ public class DbHelper extends SQLiteOpenHelper {
         );
     }
 
+    public Cursor getAddressesByUserId(int userId) {
+        return getAddressesByUser(userId);
+    }
+
+    public Cursor getAddressById(int addressId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        return db.rawQuery(
+                "SELECT * FROM addresses WHERE id = ?",
+                new String[]{String.valueOf(addressId)}
+        );
+    }
+
     public Cursor getDefaultAddress(int userId) {
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -564,8 +695,8 @@ public class DbHelper extends SQLiteOpenHelper {
         int result = db.update(
                 "addresses",
                 values,
-                "id = ?",
-                new String[]{String.valueOf(addressId)}
+                "id = ? AND user_id = ?",
+                new String[]{String.valueOf(addressId), String.valueOf(userId)}
         );
 
         return result > 0;
@@ -615,9 +746,85 @@ public class DbHelper extends SQLiteOpenHelper {
         return result > 0;
     }
 
+    public boolean deleteAddressByUser(int userId, int addressId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        int result = db.delete(
+                "addresses",
+                "id = ? AND user_id = ?",
+                new String[]{String.valueOf(addressId), String.valueOf(userId)}
+        );
+
+        return result > 0;
+    }
+
     // =========================================================
-    // CHECKOUT, ORDERS, ORDER ITEMS
+    // ORDERS
     // =========================================================
+
+    public long insertOrder(
+            int userId,
+            String orderCode,
+            int totalPrice,
+            int shippingPrice,
+            int tax,
+            String paymentMethod,
+            String shippingMethod,
+            int addressId,
+            String address,
+            String status,
+            String estimatedArrival
+    ) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        if (TextUtils.isEmpty(orderCode)) {
+            orderCode = "MRC" + System.currentTimeMillis();
+        }
+
+        if (TextUtils.isEmpty(status)) {
+            status = "confirmed";
+        }
+
+        ContentValues values = new ContentValues();
+        values.put("user_id", userId);
+        values.put("order_code", orderCode);
+        values.put("total_price", totalPrice);
+        values.put("shipping_price", shippingPrice);
+        values.put("tax", tax);
+        values.put("payment_method", paymentMethod);
+        values.put("shipping_method", shippingMethod);
+        values.put("address_id", addressId);
+        values.put("address", address);
+        values.put("status", status);
+        values.put("order_date", now());
+        values.put("estimated_arrival", estimatedArrival);
+
+        return db.insert("orders", null, values);
+    }
+
+    public boolean insertOrderItem(
+            long orderId,
+            String productId,
+            String productName,
+            String productImage,
+            int price,
+            int quantity,
+            String type
+    ) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put("order_id", orderId);
+        values.put("product_id", productId);
+        values.put("product_name", productName);
+        values.put("product_image", productImage);
+        values.put("price", price);
+        values.put("quantity", quantity);
+        values.put("type", type);
+
+        long result = db.insert("order_items", null, values);
+        return result != -1;
+    }
 
     public long checkoutFromCart(
             int userId,
@@ -628,9 +835,34 @@ public class DbHelper extends SQLiteOpenHelper {
             int tax,
             String estimatedArrival
     ) {
+        return checkoutFromCart(
+                userId,
+                paymentMethod,
+                shippingMethod,
+                0,
+                address,
+                shippingPrice,
+                tax,
+                estimatedArrival
+        );
+    }
+
+    public long checkoutFromCart(
+            int userId,
+            String paymentMethod,
+            String shippingMethod,
+            int addressId,
+            String address,
+            int shippingPrice,
+            int tax,
+            String estimatedArrival
+    ) {
         SQLiteDatabase db = this.getWritableDatabase();
 
-        Cursor cartCursor = getCheckedCartByUser(userId);
+        Cursor cartCursor = db.rawQuery(
+                "SELECT * FROM cart WHERE user_id = ? AND is_checked = 1 ORDER BY id DESC",
+                new String[]{String.valueOf(userId)}
+        );
 
         if (cartCursor.getCount() == 0) {
             cartCursor.close();
@@ -641,9 +873,9 @@ public class DbHelper extends SQLiteOpenHelper {
         int grandTotal = cartTotal + shippingPrice + tax;
         String orderCode = "MRC" + System.currentTimeMillis();
 
-        db.beginTransaction();
-
         long orderId = -1;
+
+        db.beginTransaction();
 
         try {
             ContentValues orderValues = new ContentValues();
@@ -654,6 +886,7 @@ public class DbHelper extends SQLiteOpenHelper {
             orderValues.put("tax", tax);
             orderValues.put("payment_method", paymentMethod);
             orderValues.put("shipping_method", shippingMethod);
+            orderValues.put("address_id", addressId);
             orderValues.put("address", address);
             orderValues.put("status", "confirmed");
             orderValues.put("order_date", now());
@@ -662,8 +895,6 @@ public class DbHelper extends SQLiteOpenHelper {
             orderId = db.insert("orders", null, orderValues);
 
             if (orderId == -1) {
-                db.endTransaction();
-                cartCursor.close();
                 return -1;
             }
 
@@ -677,7 +908,11 @@ public class DbHelper extends SQLiteOpenHelper {
                 itemValues.put("quantity", cartCursor.getInt(cartCursor.getColumnIndexOrThrow("quantity")));
                 itemValues.put("type", cartCursor.getString(cartCursor.getColumnIndexOrThrow("type")));
 
-                db.insert("order_items", null, itemValues);
+                long itemResult = db.insert("order_items", null, itemValues);
+
+                if (itemResult == -1) {
+                    return -1;
+                }
             }
 
             db.delete(
@@ -705,6 +940,10 @@ public class DbHelper extends SQLiteOpenHelper {
         );
     }
 
+    public Cursor getOrdersByUserId(int userId) {
+        return getOrdersByUser(userId);
+    }
+
     public Cursor getOrderById(long orderId) {
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -721,6 +960,55 @@ public class DbHelper extends SQLiteOpenHelper {
                 "SELECT * FROM order_items WHERE order_id = ?",
                 new String[]{String.valueOf(orderId)}
         );
+    }
+
+    public Cursor getOrderItemsByOrderId(long orderId) {
+        return getOrderItems(orderId);
+    }
+
+    public Cursor getOrdersByStatus(int userId, String status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        return db.rawQuery(
+                "SELECT * FROM orders WHERE user_id = ? AND LOWER(status) = LOWER(?) ORDER BY id DESC",
+                new String[]{String.valueOf(userId), status}
+        );
+    }
+
+    public Cursor getActiveOrders(int userId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        return db.rawQuery(
+                "SELECT * FROM orders WHERE user_id = ? AND LOWER(status) IN ('confirmed', 'packing', 'shipped', 'in_transit') ORDER BY id DESC",
+                new String[]{String.valueOf(userId)}
+        );
+    }
+
+    public Cursor getPastOrders(int userId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        return db.rawQuery(
+                "SELECT * FROM orders WHERE user_id = ? AND LOWER(status) = 'delivered' ORDER BY id DESC",
+                new String[]{String.valueOf(userId)}
+        );
+    }
+
+    public int getOrderCountByStatus(int userId, String status) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT COUNT(*) AS total FROM orders WHERE user_id = ? AND LOWER(status) = LOWER(?)",
+                new String[]{String.valueOf(userId), status}
+        );
+
+        int total = 0;
+
+        if (cursor.moveToFirst()) {
+            total = cursor.getInt(cursor.getColumnIndexOrThrow("total"));
+        }
+
+        cursor.close();
+        return total;
     }
 
     public boolean updateOrderStatus(long orderId, String status) {
@@ -752,7 +1040,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
         db.delete(
                 "recent_searches",
-                "user_id = ? AND keyword = ?",
+                "user_id = ? AND LOWER(keyword) = LOWER(?)",
                 new String[]{String.valueOf(userId), keyword}
         );
 
@@ -765,6 +1053,10 @@ public class DbHelper extends SQLiteOpenHelper {
         return result != -1;
     }
 
+    public boolean insertRecentSearch(int userId, String keyword) {
+        return addRecentSearch(userId, keyword);
+    }
+
     public Cursor getRecentSearches(int userId) {
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -772,6 +1064,10 @@ public class DbHelper extends SQLiteOpenHelper {
                 "SELECT * FROM recent_searches WHERE user_id = ? ORDER BY id DESC LIMIT 10",
                 new String[]{String.valueOf(userId)}
         );
+    }
+
+    public Cursor getRecentSearchesByUserId(int userId) {
+        return getRecentSearches(userId);
     }
 
     public boolean deleteRecentSearch(int searchId) {
@@ -805,6 +1101,18 @@ public class DbHelper extends SQLiteOpenHelper {
     public boolean createDefaultSettings(int userId) {
         SQLiteDatabase db = this.getWritableDatabase();
 
+        Cursor cursor = db.rawQuery(
+                "SELECT id FROM settings WHERE user_id = ? LIMIT 1",
+                new String[]{String.valueOf(userId)}
+        );
+
+        boolean alreadyExists = cursor.moveToFirst();
+        cursor.close();
+
+        if (alreadyExists) {
+            return true;
+        }
+
         ContentValues values = new ContentValues();
         values.put("user_id", userId);
         values.put("dark_mode", 0);
@@ -813,6 +1121,10 @@ public class DbHelper extends SQLiteOpenHelper {
 
         long result = db.insert("settings", null, values);
         return result != -1;
+    }
+
+    public boolean insertDefaultSettings(int userId) {
+        return createDefaultSettings(userId);
     }
 
     public Cursor getSettings(int userId) {
@@ -824,8 +1136,23 @@ public class DbHelper extends SQLiteOpenHelper {
         );
     }
 
+    public boolean getDarkMode(int userId) {
+        Cursor cursor = getSettings(userId);
+
+        boolean darkMode = false;
+
+        if (cursor.moveToFirst()) {
+            darkMode = cursor.getInt(cursor.getColumnIndexOrThrow("dark_mode")) == 1;
+        }
+
+        cursor.close();
+        return darkMode;
+    }
+
     public boolean updateDarkMode(int userId, boolean darkMode) {
         SQLiteDatabase db = this.getWritableDatabase();
+
+        createDefaultSettings(userId);
 
         ContentValues values = new ContentValues();
         values.put("dark_mode", darkMode ? 1 : 0);
@@ -843,6 +1170,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
     public boolean updateNotification(int userId, boolean enabled) {
         SQLiteDatabase db = this.getWritableDatabase();
+
+        createDefaultSettings(userId);
 
         ContentValues values = new ContentValues();
         values.put("notification_enabled", enabled ? 1 : 0);
