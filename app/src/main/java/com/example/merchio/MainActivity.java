@@ -7,8 +7,10 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.example.merchio.db.DbHelper;
+import com.example.merchio.fragments.HomeFragment;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -21,6 +23,20 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         testDatabaseConnection();
+
+        loadHomeFragment();
+    }
+
+    private void loadHomeFragment() {
+
+        HomeFragment homeFragment = new HomeFragment();
+
+        FragmentTransaction transaction =
+                getSupportFragmentManager().beginTransaction();
+
+        transaction.replace(R.id.frameLayout, homeFragment);
+
+        transaction.commit();
     }
 
     private void testDatabaseConnection() {
