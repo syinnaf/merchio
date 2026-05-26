@@ -7,15 +7,21 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.FragmentTransaction;
+import androidx.fragment.app.Fragment;
 
 import com.example.merchio.db.DbHelper;
+import com.example.merchio.fragments.CartFragment;
 import com.example.merchio.fragments.HomeFragment;
+import com.example.merchio.fragments.ProductSearchFragment;
+import com.example.merchio.fragments.ProfileFragment;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+
 
 public class MainActivity extends AppCompatActivity {
 
     DbHelper dbHelper;
     SQLiteDatabase database;
+    BottomNavigationView bottomNav;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,19 +30,41 @@ public class MainActivity extends AppCompatActivity {
 
         testDatabaseConnection();
 
-        loadHomeFragment();
+        bottomNav = findViewById(R.id.bottomNav);
+        setupBottomNav();
+
+        if (savedInstanceState == null) {
+            bottomNav.setSelectedItemId(R.id.nav_home);
+        }
     }
 
-    private void loadHomeFragment() {
+    private void setupBottomNav() {
+        bottomNav.setOnItemSelectedListener(item -> {
+            int itemId = item.getItemId();
 
-        HomeFragment homeFragment = new HomeFragment();
+            if (itemId == R.id.nav_home) {
+                openFragment(new HomeFragment());
+                return true;
+            } else if (itemId == R.id.nav_search) {
+                openFragment(new ProductSearchFragment());
+                return true;
+            } else if (itemId == R.id.nav_cart) {
+                openFragment(new CartFragment());
+                return true;
+            } else if (itemId == R.id.nav_profile) {
+                openFragment(new ProfileFragment());
+                return true;
+            }
 
-        FragmentTransaction transaction =
-                getSupportFragmentManager().beginTransaction();
+            return false;
+        });
+    }
 
-        transaction.replace(R.id.frameLayout, homeFragment);
-
-        transaction.commit();
+    private void openFragment(Fragment fragment) {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.frameLayout, fragment)
+                .commit();
     }
 
     private void testDatabaseConnection() {
