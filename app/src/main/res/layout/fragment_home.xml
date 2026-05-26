@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFFFFF">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <!-- HEADER -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/logo_merchio"/>
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Merchio"
+                    android:textColor="#1E40FF"
+                    android:textStyle="bold"
+                    android:textSize="28sp"
+                    android:paddingStart="8dp"/>
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:padding="5dp"
+                    android:background="@drawable/bg_icon"
+                    android:src="@drawable/logo_merchio"/>
+            </LinearLayout>
+
+            <!-- SEARCH -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="24dp">
+
+                <EditText
+                    android:id="@+id/etSearch"
+                    android:layout_width="0dp"
+                    android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_search"
+                    android:hint="Searches"
+                    android:paddingStart="16dp"
+                    android:drawablePadding="8dp"
+                    android:drawableStart="@drawable/logo_merchio"
+                    android:textSize="14sp"/>
+
+                <ImageButton
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginStart="12dp"
+                    android:background="@drawable/bg_filter"
+                    android:src="@drawable/logo_merchio"/>
+            </LinearLayout>
+
+            <!-- GREETING -->
+            <TextView
+                android:id="@+id/tvGreeting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hello, Username !"
+                android:textStyle="bold"
+                android:textSize="22sp"
+                android:layout_marginTop="24dp"/>
+
+            <!-- BANNER -->
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/bannerViewPager"
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:layout_marginTop="16dp"/>
+
+            <!-- CATEGORY TITLE -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="28dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Category"
+                    android:textSize="24sp"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="See All >"
+                    android:textSize="16sp"/>
+            </LinearLayout>
+
+            <!-- CATEGORY LIST -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"/>
+
+            <!-- POPULAR -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Popular"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:layout_marginTop="28dp"/>
+
+            <!-- PRODUCT GRID -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvPopular"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"/>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>
