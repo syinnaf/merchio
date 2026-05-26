@@ -24,6 +24,9 @@
             android:name=".RegisterActivity"
             android:exported="false" />
         <activity
+            android:name=".DetailProductActivity"
+            android:exported="false" />
+        <activity
             android:name=".SplashActivity"
             android:exported="true">
             <intent-filter>

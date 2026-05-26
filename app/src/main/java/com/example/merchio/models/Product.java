@@ -12,6 +12,8 @@ public class Product implements Parcelable {
     private String image_url;
     private String type;
     private int stock;
+    private String categoryName;
+    private String brand;
 
     public Product() {
     }
@@ -34,6 +36,8 @@ public class Product implements Parcelable {
         image_url = in.readString();
         type = in.readString();
         stock = in.readInt();
+        categoryName = in.readString();
+        brand = in.readString();
     }
 
     public static final Creator<Product> CREATOR = new Creator<Product>() {
@@ -164,6 +168,22 @@ public class Product implements Parcelable {
         this.stock = stock;
     }
 
+    public String getCategoryName() {
+        return categoryName != null ? categoryName : "";
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+
+    public String getBrand() {
+        return brand != null ? brand : "";
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
+    }
+
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(id);
@@ -173,6 +193,8 @@ public class Product implements Parcelable {
         dest.writeString(image_url);
         dest.writeString(type);
         dest.writeInt(stock);
+        dest.writeString(categoryName);
+        dest.writeString(brand);
     }
 
     @Override
