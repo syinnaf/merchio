@@ -69,8 +69,8 @@ public class HomeFragment extends Fragment
 
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
-        rvCategory      = view.findViewById(R.id.rvCategory);
-        rvPopular       = view.findViewById(R.id.rvPopular);
+        rvCategory = view.findViewById(R.id.rvCategory);
+        rvPopular = view.findViewById(R.id.rvPopular);
         bannerViewPager = view.findViewById(R.id.bannerViewPager);
 
         // Category: horizontal

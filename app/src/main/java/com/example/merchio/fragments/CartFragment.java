@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.content.Intent;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -20,6 +21,7 @@ import com.example.merchio.SessionManager;
 import com.example.merchio.adapters.CartAdapter;
 import com.example.merchio.db.DbHelper;
 import com.example.merchio.models.CartItem;
+import com.example.merchio.CheckoutActivity;
 import com.google.android.material.button.MaterialButton;
 
 import java.text.NumberFormat;
@@ -142,14 +144,9 @@ public class CartFragment extends Fragment {
                 return;
             }
 
-            Toast.makeText(requireContext(), "Checkout nanti disambungkan ke CheckoutActivity", Toast.LENGTH_SHORT).show();
-
-            /*
-            Nanti kalau CheckoutActivity dari Orang A sudah ada, ganti Toast di atas dengan:
-
             Intent intent = new Intent(requireContext(), CheckoutActivity.class);
+
             startActivity(intent);
-            */
         });
     }
 
