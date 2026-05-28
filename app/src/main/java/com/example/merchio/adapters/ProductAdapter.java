@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.merchio.R;
 import com.example.merchio.models.Product;
 
@@ -55,6 +56,8 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         if (!TextUtils.isEmpty(product.getImageUrl())) {
             Glide.with(context)
                     .load(product.getImageUrl())
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)
                     .into(holder.imgProduct);
         } else {
             holder.imgProduct.setImageDrawable(null);

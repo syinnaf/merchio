@@ -1,11 +1,11 @@
 package com.example.merchio.fragments;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
-
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -16,7 +16,11 @@ import com.example.merchio.R;
 import com.example.merchio.api.ApiClient;
 import com.example.merchio.api.ApiService;
 import com.example.merchio.models.Product;
+import com.example.merchio.models.Banner;
+import com.example.merchio.models.Category;
 import com.example.merchio.adapters.ProductAdapter;
+import com.example.merchio.adapters.BannerAdapter;
+import com.example.merchio.adapters.CategoryAdapter;
 
 import java.util.List;
 
@@ -30,6 +34,8 @@ public class HomeFragment extends Fragment implements ProductAdapter.OnProductCl
     ViewPager2 bannerViewPager;
 
     ApiService apiService;
+
+    Handler sliderHandler = new Handler(android.os.Looper.getMainLooper());
 
     public HomeFragment() {
     }
@@ -72,6 +78,8 @@ public class HomeFragment extends Fragment implements ProductAdapter.OnProductCl
                         .create(ApiService.class);
 
         getProducts();
+        getCategories();
+        getBanners();
 
         return view;
     }
@@ -85,6 +93,8 @@ public class HomeFragment extends Fragment implements ProductAdapter.OnProductCl
                     public void onResponse(
                             Call<List<Product>> call,
                             Response<List<Product>> response) {
+
+                        if (!isAdded() || getContext() == null) return;
 
                         if(response.isSuccessful()
                                 && response.body() != null) {
@@ -116,6 +126,8 @@ public class HomeFragment extends Fragment implements ProductAdapter.OnProductCl
                             Call<List<Product>> call,
                             Throwable t) {
 
+                        if (!isAdded() || getContext() == null) return;
+
                         Toast.makeText(
                                 getContext(),
                                 "Error : " + t.getMessage(),
@@ -123,6 +135,132 @@ public class HomeFragment extends Fragment implements ProductAdapter.OnProductCl
                         ).show();
                     }
                 });
+    }
+
+    private void getCategories() {
+
+        apiService.getCategories()
+                .enqueue(new Callback<List<Category>>() {
+
+                    @Override
+                    public void onResponse(
+                            Call<List<Category>> call,
+                            Response<List<Category>> response) {
+
+                        if (!isAdded() || getContext() == null) return;
+
+                        if(response.isSuccessful()
+                                && response.body() != null) {
+
+                            CategoryAdapter adapter =
+                                    new CategoryAdapter(
+                                            getContext(),
+                                            response.body()
+                                    );
+
+                            rvCategory.setAdapter(adapter);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(
+                            Call<List<Category>> call,
+                            Throwable t) {
+
+                        if (!isAdded() || getContext() == null) return;
+
+                        Toast.makeText(
+                                getContext(),
+                                t.getMessage(),
+                                Toast.LENGTH_SHORT
+                        ).show();
+                    }
+                });
+    }
+
+    private void getBanners() {
+
+        apiService.getBanners()
+                .enqueue(new Callback<List<Banner>>() {
+
+                    @Override
+                    public void onResponse(
+                            Call<List<Banner>> call,
+                            Response<List<Banner>> response) {
+
+                        if (!isAdded() || getContext() == null) return;
+
+                        if(response.isSuccessful()
+                                && response.body() != null) {
+
+                            BannerAdapter adapter =
+                                    new BannerAdapter(
+                                            getContext(),
+                                            response.body()
+                                    );
+
+                            bannerViewPager.setAdapter(adapter);
+
+                            autoSlideBanner();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(
+                            Call<List<Banner>> call,
+                            Throwable t) {
+
+                        if (!isAdded() || getContext() == null) return;
+
+                        Toast.makeText(
+                                getContext(),
+                                t.getMessage(),
+                                Toast.LENGTH_SHORT
+                        ).show();
+                    }
+                });
+    }
+
+    private void autoSlideBanner() {
+
+        Runnable runnable = new Runnable() {
+
+            @Override
+            public void run() {
+
+                if(bannerViewPager == null ||
+                        bannerViewPager.getAdapter() == null)
+                    return;
+
+                int current =
+                        bannerViewPager.getCurrentItem();
+
+                int total =
+                        bannerViewPager.getAdapter()
+                                .getItemCount();
+
+                if(current < total - 1) {
+
+                    bannerViewPager.setCurrentItem(
+                            current + 1
+                    );
+
+                } else {
+
+                    bannerViewPager.setCurrentItem(0);
+                }
+
+                sliderHandler.postDelayed(
+                        this,
+                        3000
+                );
+            }
+        };
+
+        sliderHandler.postDelayed(
+                runnable,
+                3000
+        );
     }
 
     @Override
@@ -147,5 +285,11 @@ public class HomeFragment extends Fragment implements ProductAdapter.OnProductCl
         ).show();
 
         // nanti simpan ke SQLite
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        sliderHandler.removeCallbacksAndMessages(null);
     }
 }
