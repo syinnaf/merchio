@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -136,21 +137,88 @@ public class CartFragment extends Fragment {
 
         btnCheckout.setOnClickListener(v -> {
             int selectedCount = dbHelper.getCheckedCartCount(userId);
+            int total = dbHelper.getCheckedCartTotal(userId);
 
             if (selectedCount == 0) {
-                Toast.makeText(requireContext(), "Pilih item dulu sebelum checkout", Toast.LENGTH_SHORT).show();
+                Toast.makeText(
+                        requireContext(),
+                        "Pilih item dulu sebelum checkout",
+                        Toast.LENGTH_SHORT
+                ).show();
                 return;
             }
 
-            Toast.makeText(requireContext(), "Checkout nanti disambungkan ke CheckoutActivity", Toast.LENGTH_SHORT).show();
-
-            /*
-            Nanti kalau CheckoutActivity dari Orang A sudah ada, ganti Toast di atas dengan:
-
-            Intent intent = new Intent(requireContext(), CheckoutActivity.class);
-            startActivity(intent);
-            */
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Checkout")
+                    .setMessage(
+                            "Checkout " + selectedCount + " item?\n\n" +
+                                    "Total: " + formatRupiah(total)
+                    )
+                    .setNegativeButton("Batal", null)
+                    .setPositiveButton("Checkout", (dialog, which) -> processCheckout())
+                    .show();
         });
+    }
+
+    private void processCheckout() {
+        if (userId == -1) {
+            Toast.makeText(
+                    requireContext(),
+                    "User belum login",
+                    Toast.LENGTH_SHORT
+            ).show();
+            return;
+        }
+
+        int selectedCount = dbHelper.getCheckedCartCount(userId);
+
+        if (selectedCount == 0) {
+            Toast.makeText(
+                    requireContext(),
+                    "Tidak ada item yang dipilih",
+                    Toast.LENGTH_SHORT
+            ).show();
+            return;
+        }
+
+        /*
+         * Checkout sementara untuk demo.
+         * Nanti kalau CheckoutActivity dari Orang A sudah jadi,
+         * bagian payment, shipping, dan address ini diganti dari input user.
+         */
+        String paymentMethod = "COD";
+        String shippingMethod = "Standard Shipping";
+        String address = "Alamat belum dipilih";
+        int shippingPrice = 0;
+        int tax = 0;
+        String estimatedArrival = "3-5 hari";
+
+        long orderId = dbHelper.checkoutFromCart(
+                userId,
+                paymentMethod,
+                shippingMethod,
+                address,
+                shippingPrice,
+                tax,
+                estimatedArrival
+        );
+
+        if (orderId != -1) {
+            Toast.makeText(
+                    requireContext(),
+                    "Checkout berhasil. Pesanan masuk Packing",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            loadCartItems();
+
+        } else {
+            Toast.makeText(
+                    requireContext(),
+                    "Checkout gagal",
+                    Toast.LENGTH_SHORT
+            ).show();
+        }
     }
 
     private void loadCartItems() {

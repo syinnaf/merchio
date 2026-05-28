@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.content.Intent;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,6 +19,10 @@ import com.bumptech.glide.Glide;
 import com.example.merchio.R;
 import com.example.merchio.SessionManager;
 import com.example.merchio.db.DbHelper;
+import com.example.merchio.SettingsActivity;
+import com.example.merchio.PurchaseHistoryActivity;
+import com.example.merchio.PaymentMethodActivity;
+import com.example.merchio.CustomerServiceActivity;
 
 public class ProfileFragment extends Fragment {
 
@@ -153,20 +158,24 @@ public class ProfileFragment extends Fragment {
     }
 
     private void setupMenuClicks() {
-        menuPurchaseHistory.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Purchase History nanti disambungkan", Toast.LENGTH_SHORT).show()
-        );
+        menuPurchaseHistory.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), PurchaseHistoryActivity.class);
+            startActivity(intent);
+        });
 
-        menuPaymentMethod.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Payment Method nanti dibuat", Toast.LENGTH_SHORT).show()
-        );
+        menuPaymentMethod.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), PaymentMethodActivity.class);
+            startActivity(intent);
+        });
 
-        menuSetting.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Setting nanti dibuat", Toast.LENGTH_SHORT).show()
-        );
+        menuSetting.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), SettingsActivity.class);
+            startActivity(intent);
+        });
 
-        menuCustomerService.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Customer Service nanti dibuat", Toast.LENGTH_SHORT).show()
-        );
+        menuCustomerService.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), CustomerServiceActivity.class);
+            startActivity(intent);
+        });
     }
 }

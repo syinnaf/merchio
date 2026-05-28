@@ -1252,4 +1252,12 @@ public class DbHelper extends SQLiteOpenHelper {
 
         return result > 0;
     }
+
+    public boolean saveDarkModeSetting(int userId, boolean enabled) {
+        return updateDarkMode(userId, enabled);
+    }
+
+    public boolean getDarkModeSetting(int userId) {
+        return getDarkMode(userId);
+    }
 }
