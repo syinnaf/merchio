@@ -14,6 +14,7 @@ import com.example.merchio.fragments.CartFragment;
 import com.example.merchio.fragments.HomeFragment;
 import com.example.merchio.fragments.ProductSearchFragment;
 import com.example.merchio.fragments.ProfileFragment;
+import com.example.merchio.SessionManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 
@@ -45,12 +46,16 @@ public class MainActivity extends AppCompatActivity {
             if (itemId == R.id.nav_home) {
                 openFragment(new HomeFragment());
                 return true;
+
             } else if (itemId == R.id.nav_search) {
                 openFragment(new ProductSearchFragment());
                 return true;
+
             } else if (itemId == R.id.nav_cart) {
+                seedCartForTesting();
                 openFragment(new CartFragment());
                 return true;
+
             } else if (itemId == R.id.nav_profile) {
                 openFragment(new ProfileFragment());
                 return true;
@@ -65,6 +70,50 @@ public class MainActivity extends AppCompatActivity {
                 .beginTransaction()
                 .replace(R.id.frameLayout, fragment)
                 .commit();
+    }
+
+
+    private void seedCartForTesting() {
+        SessionManager sessionManager = new SessionManager(this);
+        int userId = sessionManager.getUserId();
+
+        if (userId == -1) {
+            Toast.makeText(this, "User belum login", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        dbHelper.addToCart(
+                userId,
+                "P001",
+                "Shikatani Standee",
+                "",
+                35000,
+                "Standee",
+                1,
+                10
+        );
+
+        dbHelper.addToCart(
+                userId,
+                "P002",
+                "Kitty Doll",
+                "",
+                75000,
+                "Doll",
+                1,
+                8
+        );
+
+        dbHelper.addToCart(
+                userId,
+                "P003",
+                "Shikisi",
+                "",
+                50000,
+                "Poster",
+                1,
+                15
+        );
     }
 
     private void testDatabaseConnection() {

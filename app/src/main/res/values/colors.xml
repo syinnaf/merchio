@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="merchio_primary">#8B6DFF</color>
+    <color name="merchio_primary_dark">#6F52F5</color>
+    <color name="merchio_primary_light">#EEE8FF</color>
+    <color name="merchio_surface">#F8F6FF</color>
+    <color name="merchio_stroke">#DDD4FF</color>
+    <color name="merchio_text_main">#1A1A1A</color>
+    <color name="merchio_text_secondary">#7C7C8A</color>
+    <color name="merchio_white">#FFFFFF</color>
+    <color name="merchio_danger">#C8C8D2</color>
+    <color name="merchio_blue_price">#0D5BFF</color>
 </resources>

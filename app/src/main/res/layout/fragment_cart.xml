@@ -60,10 +60,11 @@
             android:id="@+id/cb_select_all"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:buttonTint="#111111"
+            android:button="@drawable/checkbox_merchio_selector"
             android:text="Pilih Semua"
             android:textColor="#111111"
-            android:textSize="15sp" />
+            android:textSize="14sp"
+            android:buttonTint="@null" />
 
         <LinearLayout
             android:layout_width="match_parent"

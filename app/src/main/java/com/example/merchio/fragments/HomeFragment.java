@@ -16,6 +16,7 @@ import com.example.merchio.R;
 import com.example.merchio.api.ApiClient;
 import com.example.merchio.api.ApiService;
 import com.example.merchio.models.Product;
+import com.example.merchio.adapters.ProductAdapter;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class HomeFragment extends Fragment {
+public class HomeFragment extends Fragment implements ProductAdapter.OnProductClickListener {
 
     RecyclerView rvCategory, rvPopular;
     ViewPager2 bannerViewPager;
@@ -91,12 +92,14 @@ public class HomeFragment extends Fragment {
                             List<Product> productList =
                                     response.body();
 
-                            Toast.makeText(
-                                    getContext(),
-                                    "Produk berhasil diambil : "
-                                            + productList.size(),
-                                    Toast.LENGTH_LONG
-                            ).show();
+                            ProductAdapter adapter =
+                                    new ProductAdapter(
+                                            getContext(),
+                                            productList,
+                                            HomeFragment.this
+                                    );
+
+                            rvPopular.setAdapter(adapter);
 
                         } else {
 
@@ -120,5 +123,29 @@ public class HomeFragment extends Fragment {
                         ).show();
                     }
                 });
+    }
+
+    @Override
+    public void onProductClick(Product product) {
+
+        Toast.makeText(
+                getContext(),
+                product.getName(),
+                Toast.LENGTH_SHORT
+        ).show();
+
+        // nanti pindah ke DetailProductActivity
+    }
+
+    @Override
+    public void onAddToCartClick(Product product) {
+
+        Toast.makeText(
+                getContext(),
+                product.getName() + " ditambahkan",
+                Toast.LENGTH_SHORT
+        ).show();
+
+        // nanti simpan ke SQLite
     }
 }
