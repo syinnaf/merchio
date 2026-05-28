@@ -24,8 +24,10 @@
             android:id="@+id/cb_item"
             android:layout_width="40dp"
             android:layout_height="match_parent"
-            android:button="@drawable/checkbox_merchio_selector"
-            android:gravity="center" />
+            android:gravity="center"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            app:buttonTint="@color/cart_checkbox_tint" />
 
         <ImageView
             android:id="@+id/img_product"

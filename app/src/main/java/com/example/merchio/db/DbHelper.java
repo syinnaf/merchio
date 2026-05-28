@@ -16,12 +16,42 @@ public class DbHelper extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "merchio.db";
     public static final int DATABASE_VERSION = 3;
 
+    public static final String STATUS_PACKING = "packing";
+    public static final String STATUS_SHIPPING = "shipping";
+    public static final String STATUS_DELIVERED = "delivered";
+
     public DbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     private String now() {
         return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+    }
+
+    private String normalizeOrderStatus(String status) {
+        if (TextUtils.isEmpty(status)) {
+            return STATUS_PACKING;
+        }
+
+        status = status.toLowerCase().trim();
+
+        if (status.equals("confirmed")) {
+            return STATUS_PACKING;
+        }
+
+        if (status.equals("shipped") || status.equals("in_transit")) {
+            return STATUS_SHIPPING;
+        }
+
+        if (status.equals(STATUS_DELIVERED)) {
+            return STATUS_DELIVERED;
+        }
+
+        if (status.equals(STATUS_SHIPPING)) {
+            return STATUS_SHIPPING;
+        }
+
+        return STATUS_PACKING;
     }
 
     @Override
@@ -781,9 +811,7 @@ public class DbHelper extends SQLiteOpenHelper {
             orderCode = "MRC" + System.currentTimeMillis();
         }
 
-        if (TextUtils.isEmpty(status)) {
-            status = "confirmed";
-        }
+        status = normalizeOrderStatus(status);
 
         ContentValues values = new ContentValues();
         values.put("user_id", userId);
@@ -888,7 +916,7 @@ public class DbHelper extends SQLiteOpenHelper {
             orderValues.put("shipping_method", shippingMethod);
             orderValues.put("address_id", addressId);
             orderValues.put("address", address);
-            orderValues.put("status", "confirmed");
+            orderValues.put("status", STATUS_PACKING); //baru gw ganti dari confimed jadi packing
             orderValues.put("order_date", now());
             orderValues.put("estimated_arrival", estimatedArrival);
 
@@ -969,6 +997,8 @@ public class DbHelper extends SQLiteOpenHelper {
     public Cursor getOrdersByStatus(int userId, String status) {
         SQLiteDatabase db = this.getReadableDatabase();
 
+        status = normalizeOrderStatus(status);
+
         return db.rawQuery(
                 "SELECT * FROM orders WHERE user_id = ? AND LOWER(status) = LOWER(?) ORDER BY id DESC",
                 new String[]{String.valueOf(userId), status}
@@ -979,7 +1009,7 @@ public class DbHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
 
         return db.rawQuery(
-                "SELECT * FROM orders WHERE user_id = ? AND LOWER(status) IN ('confirmed', 'packing', 'shipped', 'in_transit') ORDER BY id DESC",
+                "SELECT * FROM orders WHERE user_id = ? AND LOWER(status) IN ('packing', 'shipping') ORDER BY id DESC",
                 new String[]{String.valueOf(userId)}
         );
     }
@@ -996,6 +1026,8 @@ public class DbHelper extends SQLiteOpenHelper {
     public int getOrderCountByStatus(int userId, String status) {
         SQLiteDatabase db = this.getReadableDatabase();
 
+        status = normalizeOrderStatus(status);
+
         Cursor cursor = db.rawQuery(
                 "SELECT COUNT(*) AS total FROM orders WHERE user_id = ? AND LOWER(status) = LOWER(?)",
                 new String[]{String.valueOf(userId), status}
@@ -1010,9 +1042,10 @@ public class DbHelper extends SQLiteOpenHelper {
         cursor.close();
         return total;
     }
-
     public boolean updateOrderStatus(long orderId, String status) {
         SQLiteDatabase db = this.getWritableDatabase();
+
+        status = normalizeOrderStatus(status);
 
         ContentValues values = new ContentValues();
         values.put("status", status);
@@ -1025,6 +1058,40 @@ public class DbHelper extends SQLiteOpenHelper {
         );
 
         return result > 0;
+    }
+
+    public void normalizeLegacyOrderStatuses(int userId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues packingValues = new ContentValues();
+        packingValues.put("status", STATUS_PACKING);
+
+        db.update(
+                "orders",
+                packingValues,
+                "user_id = ? AND LOWER(status) IN ('confirmed')",
+                new String[]{String.valueOf(userId)}
+        );
+
+        ContentValues shippingValues = new ContentValues();
+        shippingValues.put("status", STATUS_SHIPPING);
+
+        db.update(
+                "orders",
+                shippingValues,
+                "user_id = ? AND LOWER(status) IN ('shipped', 'in_transit')",
+                new String[]{String.valueOf(userId)}
+        );
+
+        ContentValues deliveredValues = new ContentValues();
+        deliveredValues.put("status", STATUS_DELIVERED);
+
+        db.update(
+                "orders",
+                deliveredValues,
+                "user_id = ? AND LOWER(status) IN ('delivery', 'complete', 'completed')",
+                new String[]{String.valueOf(userId)}
+        );
     }
 
     // =========================================================

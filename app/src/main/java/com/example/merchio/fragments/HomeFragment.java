@@ -1,6 +1,8 @@
 package com.example.merchio.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,11 +14,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.example.merchio.DetailProductActivity;
 import com.example.merchio.R;
+import com.example.merchio.SessionManager;
+import com.example.merchio.adapters.ProductAdapter;
 import com.example.merchio.api.ApiClient;
 import com.example.merchio.api.ApiService;
+import com.example.merchio.db.DbHelper;
 import com.example.merchio.models.Product;
-import com.example.merchio.adapters.ProductAdapter;
 
 import java.util.List;
 
@@ -26,35 +31,58 @@ import retrofit2.Response;
 
 public class HomeFragment extends Fragment implements ProductAdapter.OnProductClickListener {
 
-    RecyclerView rvCategory, rvPopular;
-    ViewPager2 bannerViewPager;
+    private RecyclerView rvCategory, rvPopular;
+    private ViewPager2 bannerViewPager;
 
-    ApiService apiService;
+    private ApiService apiService;
+    private DbHelper dbHelper;
+    private SessionManager sessionManager;
+
+    private int userId = -1;
 
     public HomeFragment() {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater,
-                             ViewGroup container,
-                             Bundle savedInstanceState) {
-
+    public View onCreateView(
+            LayoutInflater inflater,
+            ViewGroup container,
+            Bundle savedInstanceState
+    ) {
         View view = inflater.inflate(
                 R.layout.fragment_home,
                 container,
                 false
         );
 
+        initViews(view);
+        initHelpers();
+        setupRecyclerViews();
+        getProducts();
+
+        return view;
+    }
+
+    private void initViews(View view) {
         rvCategory = view.findViewById(R.id.rvCategory);
-
         rvPopular = view.findViewById(R.id.rvPopular);
+        bannerViewPager = view.findViewById(R.id.bannerViewPager);
+    }
 
-        bannerViewPager =
-                view.findViewById(R.id.bannerViewPager);
+    private void initHelpers() {
+        dbHelper = new DbHelper(requireContext());
+        sessionManager = new SessionManager(requireContext());
+        userId = sessionManager.getUserId();
 
+        apiService = ApiClient
+                .getClient()
+                .create(ApiService.class);
+    }
+
+    private void setupRecyclerViews() {
         rvCategory.setLayoutManager(
                 new LinearLayoutManager(
-                        getContext(),
+                        requireContext(),
                         LinearLayoutManager.HORIZONTAL,
                         false
                 )
@@ -62,90 +90,138 @@ public class HomeFragment extends Fragment implements ProductAdapter.OnProductCl
 
         rvPopular.setLayoutManager(
                 new GridLayoutManager(
-                        getContext(),
+                        requireContext(),
                         2
                 )
         );
-
-        apiService =
-                ApiClient.getClient()
-                        .create(ApiService.class);
-
-        getProducts();
-
-        return view;
     }
 
     private void getProducts() {
+        apiService.getProducts().enqueue(new Callback<List<Product>>() {
 
-        apiService.getProducts()
-                .enqueue(new Callback<List<Product>>() {
+            @Override
+            public void onResponse(
+                    Call<List<Product>> call,
+                    Response<List<Product>> response
+            ) {
+                if (!isAdded()) {
+                    return;
+                }
 
-                    @Override
-                    public void onResponse(
-                            Call<List<Product>> call,
-                            Response<List<Product>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<Product> productList = response.body();
 
-                        if(response.isSuccessful()
-                                && response.body() != null) {
+                    ProductAdapter adapter = new ProductAdapter(
+                            requireContext(),
+                            productList,
+                            HomeFragment.this
+                    );
 
-                            List<Product> productList =
-                                    response.body();
+                    rvPopular.setAdapter(adapter);
 
-                            ProductAdapter adapter =
-                                    new ProductAdapter(
-                                            getContext(),
-                                            productList,
-                                            HomeFragment.this
-                                    );
+                } else {
+                    Toast.makeText(
+                            requireContext(),
+                            "Produk gagal dimuat",
+                            Toast.LENGTH_SHORT
+                    ).show();
+                }
+            }
 
-                            rvPopular.setAdapter(adapter);
+            @Override
+            public void onFailure(
+                    Call<List<Product>> call,
+                    Throwable t
+            ) {
+                if (!isAdded()) {
+                    return;
+                }
 
-                        } else {
-
-                            Toast.makeText(
-                                    getContext(),
-                                    "Response gagal",
-                                    Toast.LENGTH_LONG
-                            ).show();
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(
-                            Call<List<Product>> call,
-                            Throwable t) {
-
-                        Toast.makeText(
-                                getContext(),
-                                "Error : " + t.getMessage(),
-                                Toast.LENGTH_LONG
-                        ).show();
-                    }
-                });
+                Toast.makeText(
+                        requireContext(),
+                        "Error API: " + t.getMessage(),
+                        Toast.LENGTH_LONG
+                ).show();
+            }
+        });
     }
 
     @Override
     public void onProductClick(Product product) {
+        Intent intent = new Intent(
+                requireContext(),
+                DetailProductActivity.class
+        );
 
-        Toast.makeText(
-                getContext(),
-                product.getName(),
-                Toast.LENGTH_SHORT
-        ).show();
-
-        // nanti pindah ke DetailProductActivity
+        intent.putExtra("product", product);
+        startActivity(intent);
     }
 
     @Override
     public void onAddToCartClick(Product product) {
+        if (userId == -1) {
+            Toast.makeText(
+                    requireContext(),
+                    "Silakan login dulu",
+                    Toast.LENGTH_SHORT
+            ).show();
+            return;
+        }
 
-        Toast.makeText(
-                getContext(),
-                product.getName() + " ditambahkan",
-                Toast.LENGTH_SHORT
-        ).show();
+        if (product == null) {
+            Toast.makeText(
+                    requireContext(),
+                    "Produk tidak valid",
+                    Toast.LENGTH_SHORT
+            ).show();
+            return;
+        }
 
-        // nanti simpan ke SQLite
+        if (product.getStock() <= 0) {
+            Toast.makeText(
+                    requireContext(),
+                    "Stok produk habis",
+                    Toast.LENGTH_SHORT
+            ).show();
+            return;
+        }
+
+        String productId = safeText(product.getId(), "0");
+        String productName = safeText(product.getName(), "Produk");
+        String productImage = safeText(product.getImageUrl(), "");
+        String productType = safeText(product.getType(), "Default");
+
+        boolean success = dbHelper.addToCart(
+                userId,
+                productId,
+                productName,
+                productImage,
+                product.getPrice(),
+                productType,
+                1,
+                product.getStock()
+        );
+
+        if (success) {
+            Toast.makeText(
+                    requireContext(),
+                    productName + " masuk cart",
+                    Toast.LENGTH_SHORT
+            ).show();
+        } else {
+            Toast.makeText(
+                    requireContext(),
+                    "Gagal menambahkan ke cart",
+                    Toast.LENGTH_SHORT
+            ).show();
+        }
+    }
+
+    private String safeText(String value, String fallback) {
+        if (TextUtils.isEmpty(value)) {
+            return fallback;
+        }
+
+        return value;
     }
 }
