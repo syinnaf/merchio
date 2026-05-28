@@ -41,6 +41,8 @@
         <activity
             android:name=".CheckoutActivity"
             android:exported="false" />
+        <activity
+            android:name=".OrderSuccessActivity" />
     </application>
 
 </manifest>

@@ -257,49 +257,40 @@ public class CheckoutActivity extends AppCompatActivity {
     private void processOrder() {
 
         String paymentMethod =
-                rbCard.isChecked()
-                        ? "Credit Card"
-                        : "Digital Wallet";
+                rbCard.isChecked() ? "Credit Card" : "Digital Wallet";
 
         String shippingMethod =
-                rbExpress.isChecked()
-                        ? "Express"
-                        : "Standard";
+                rbExpress.isChecked() ? "Express" : "Standard";
 
         String estimatedArrival =
-                rbExpress.isChecked()
-                        ? "1-2 Days"
-                        : "4-5 Days";
+                rbExpress.isChecked() ? "1-2 Days" : "4-5 Days";
 
-        long orderId =
-                dbHelper.checkoutFromCart(
-                        userId,
-                        paymentMethod,
-                        shippingMethod,
-                        addressId,
-                        fullAddress,
-                        shippingCost,
-                        tax,
-                        estimatedArrival
-                );
+        long orderId = dbHelper.checkoutFromCart(
+                userId,
+                paymentMethod,
+                shippingMethod,
+                addressId,
+                fullAddress,
+                shippingCost,
+                tax,
+                estimatedArrival
+        );
 
-        if(orderId != -1) {
+        if (orderId != -1) {
 
-            Toast.makeText(
-                    this,
-                    "Order berhasil",
-                    Toast.LENGTH_SHORT
-            ).show();
+            // Pindah ke OrderSuccessActivity, kirim orderId
+            Intent intent = new Intent(this, OrderSuccessActivity.class);
+            intent.putExtra("order_id", orderId);
 
+            // Clear back stack — user tidak bisa back ke Checkout setelah sukses
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+            startActivity(intent);
             finish();
 
         } else {
 
-            Toast.makeText(
-                    this,
-                    "Order gagal",
-                    Toast.LENGTH_SHORT
-            ).show();
+            Toast.makeText(this, "Order gagal, coba lagi", Toast.LENGTH_SHORT).show();
         }
     }
 
