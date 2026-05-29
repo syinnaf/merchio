@@ -8,6 +8,7 @@ public class SessionManager {
     private static final String PREF_NAME = "merchio_session";
     private static final String KEY_IS_LOGIN = "is_login";
     private static final String KEY_USER_ID = "user_id";
+    private static final String KEY_ONBOARDING_DONE = "onboarding_done";
     private static final String KEY_EMAIL = "email";
 
     private final SharedPreferences prefs;
@@ -35,6 +36,15 @@ public class SessionManager {
 
     public String getEmail() {
         return prefs.getString(KEY_EMAIL, "");
+    }
+
+    public void setOnboardingDone(boolean done) {
+        editor.putBoolean(KEY_ONBOARDING_DONE, done);
+        editor.apply();
+    }
+
+    public boolean isOnboardingDone() {
+        return prefs.getBoolean(KEY_ONBOARDING_DONE, false);
     }
 
     public void logout() {

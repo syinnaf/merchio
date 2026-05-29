@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/merchio_bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/btn_back"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:paddingBottom="3dp"
+                android:text="‹"
+                android:textColor="@color/merchio_text_primary"
+                android:textSize="35sp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Payment Method"
+                android:textColor="@color/merchio_text_primary"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <Space
+                android:layout_width="44dp"
+                android:layout_height="44dp" />
+        </LinearLayout>
+
+        <RadioGroup
+            android:id="@+id/rg_payment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/bg_settings_card"
+            android:orientation="vertical"
+            android:padding="18dp">
+
+            <RadioButton
+                android:id="@+id/rb_bank"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:buttonTint="@color/merchio_primary"
+                android:text="Bank Transfer"
+                android:textColor="@color/merchio_text_primary"
+                android:textSize="15sp" />
+
+            <RadioButton
+                android:id="@+id/rb_dana"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:buttonTint="@color/merchio_primary"
+                android:text="DANA"
+                android:textColor="@color/merchio_text_primary"
+                android:textSize="15sp" />
+
+            <RadioButton
+                android:id="@+id/rb_gopay"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:buttonTint="@color/merchio_primary"
+                android:text="GoPay"
+                android:textColor="@color/merchio_text_primary"
+                android:textSize="15sp" />
+
+            <RadioButton
+                android:id="@+id/rb_shopeepay"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:buttonTint="@color/merchio_primary"
+                android:text="ShopeePay"
+                android:textColor="@color/merchio_text_primary"
+                android:textSize="15sp" />
+
+            <RadioButton
+                android:id="@+id/rb_cod"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:buttonTint="@color/merchio_primary"
+                android:text="COD"
+                android:textColor="@color/merchio_text_primary"
+                android:textSize="15sp" />
+
+        </RadioGroup>
+
+        <Button
+            android:id="@+id/btn_save_payment"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="24dp"
+            android:backgroundTint="@color/merchio_primary"
+            android:text="Set as Default Payment"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+</ScrollView>

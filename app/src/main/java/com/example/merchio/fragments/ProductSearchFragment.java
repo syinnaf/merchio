@@ -28,9 +28,14 @@ import com.example.merchio.adapters.ProductAdapter;
 import com.example.merchio.db.DbHelper;
 import com.example.merchio.models.Product;
 import com.google.android.flexbox.FlexboxLayout;
+import com.example.merchio.api.ApiClient;
+import com.example.merchio.api.ApiService;
 
 import java.util.ArrayList;
 import java.util.List;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ProductSearchFragment extends Fragment {
 
@@ -47,6 +52,7 @@ public class ProductSearchFragment extends Fragment {
 
     private DbHelper dbHelper;
     private SessionManager sessionManager;
+    private ApiService apiService;
     private int userId;
 
     @Nullable
@@ -76,6 +82,10 @@ public class ProductSearchFragment extends Fragment {
         dbHelper = new DbHelper(requireContext());
         sessionManager = new SessionManager(requireContext());
         userId = sessionManager.getUserId();
+
+        apiService = ApiClient
+                .getClient()
+                .create(ApiService.class);
 
         // SETUP RECYCLERVIEW
         rvProducts.setLayoutManager(
@@ -109,6 +119,36 @@ public class ProductSearchFragment extends Fragment {
 
                     @Override
                     public void onAddToCartClick(Product product) {
+                        if (userId == -1) {
+                            Toast.makeText(
+                                    requireContext(),
+                                    "Silakan login dulu",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+                            return;
+                        }
+
+                        if (product == null) {
+                            Toast.makeText(
+                                    requireContext(),
+                                    "Produk tidak valid",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+                            return;
+                        }
+
+                        if (product.getStock() <= 0) {
+                            Toast.makeText(
+                                    requireContext(),
+                                    "Stok produk habis",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+                            return;
+                        }
+
+                        String productType = product.getType() != null
+                                ? product.getType()
+                                : "Default";
 
                         boolean success = dbHelper.addToCart(
                                 userId,
@@ -116,15 +156,12 @@ public class ProductSearchFragment extends Fragment {
                                 product.getName(),
                                 product.getImageUrl(),
                                 product.getPrice(),
-                                product.getType() != null
-                                        ? product.getType()
-                                        : "A",
+                                productType,
                                 1,
                                 product.getStock()
                         );
 
                         if (success) {
-
                             Toast.makeText(
                                     requireContext(),
                                     product.getName() + " ditambahkan ke cart",
@@ -132,7 +169,6 @@ public class ProductSearchFragment extends Fragment {
                             ).show();
 
                         } else {
-
                             Toast.makeText(
                                     requireContext(),
                                     "Gagal menambahkan ke cart",
@@ -145,7 +181,6 @@ public class ProductSearchFragment extends Fragment {
 
         rvProducts.setAdapter(productAdapter);
 
-        // LOAD DUMMY PRODUCTS
         fetchProducts();
 
         // TAMPILKAN RECENT SEARCH
@@ -217,45 +252,62 @@ public class ProductSearchFragment extends Fragment {
     }
 
     // =========================================================
-    // DUMMY PRODUCTS
+    // FETCH PRODUCTS
     // =========================================================
-
     private void fetchProducts() {
+        apiService.getProducts().enqueue(new Callback<List<Product>>() {
 
-        List<Product> dummy = new ArrayList<>();
+            @Override
+            public void onResponse(
+                    Call<List<Product>> call,
+                    Response<List<Product>> response
+            ) {
+                if (!isAdded()) {
+                    return;
+                }
 
-        String[] names = {
-                "Rare Holo Character Card Set Vol. 2",
-                "Rare Holo Character Card Set Vol. 2",
-                "Rare Holo Character Card Set Vol. 2",
-                "Rare Holo Character Card Set Vol. 2"
-        };
+                if (response.isSuccessful() && response.body() != null) {
+                    List<Product> apiProducts = response.body();
 
-        for (int i = 0; i < names.length; i++) {
+                    allProducts.clear();
+                    allProducts.addAll(apiProducts);
 
-            Product p = new Product();
+                    filteredProducts.clear();
+                    filteredProducts.addAll(apiProducts);
 
-            p.setId(String.valueOf(i));
-            p.setName(names[i]);
-            p.setCategoryName("Photocards");
-            p.setBrand("Brand");
-            p.setType("A");
-            p.setPrice(24000);
-            p.setStock(80);
-            p.setImageUrl("");
+                    productAdapter.updateList(filteredProducts);
 
-            dummy.add(p);
-        }
+                    checkEmpty();
 
-        allProducts.clear();
-        allProducts.addAll(dummy);
+                } else {
+                    Toast.makeText(
+                            requireContext(),
+                            "Produk gagal dimuat",
+                            Toast.LENGTH_SHORT
+                    ).show();
 
-        filteredProducts.clear();
-        filteredProducts.addAll(dummy);
+                    checkEmpty();
+                }
+            }
 
-        productAdapter.updateList(filteredProducts);
+            @Override
+            public void onFailure(
+                    Call<List<Product>> call,
+                    Throwable t
+            ) {
+                if (!isAdded()) {
+                    return;
+                }
 
-        checkEmpty();
+                Toast.makeText(
+                        requireContext(),
+                        "Error API: " + t.getMessage(),
+                        Toast.LENGTH_LONG
+                ).show();
+
+                checkEmpty();
+            }
+        });
     }
 
     // =========================================================
@@ -276,11 +328,12 @@ public class ProductSearchFragment extends Fragment {
 
             for (Product p : allProducts) {
 
-                if (p.getName().toLowerCase().contains(lower)
-                        || p.getCategoryName().toLowerCase().contains(lower)
-                        || p.getBrand().toLowerCase().contains(lower)) {
+                if (safeLower(p.getName()).contains(lower)
+                        || safeLower(p.getCategoryName()).contains(lower)
+                        || safeLower(p.getBrand()).contains(lower)) {
 
                     filteredProducts.add(p);
+
                 }
             }
         }
@@ -288,6 +341,14 @@ public class ProductSearchFragment extends Fragment {
         productAdapter.updateList(filteredProducts);
 
         checkEmpty();
+    }
+
+    private String safeLower(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value.toLowerCase();
     }
 
     // =========================================================

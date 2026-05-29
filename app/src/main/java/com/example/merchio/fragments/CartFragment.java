@@ -1,5 +1,6 @@
 package com.example.merchio.fragments;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -8,7 +9,6 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.content.Intent;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,12 +16,12 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.merchio.CheckoutActivity;
 import com.example.merchio.R;
 import com.example.merchio.SessionManager;
 import com.example.merchio.adapters.CartAdapter;
 import com.example.merchio.db.DbHelper;
 import com.example.merchio.models.CartItem;
-import com.example.merchio.CheckoutActivity;
 import com.google.android.material.button.MaterialButton;
 
 import java.text.NumberFormat;
@@ -140,12 +140,15 @@ public class CartFragment extends Fragment {
             int selectedCount = dbHelper.getCheckedCartCount(userId);
 
             if (selectedCount == 0) {
-                Toast.makeText(requireContext(), "Pilih item dulu sebelum checkout", Toast.LENGTH_SHORT).show();
+                Toast.makeText(
+                        requireContext(),
+                        "Pilih item dulu sebelum checkout",
+                        Toast.LENGTH_SHORT
+                ).show();
                 return;
             }
 
             Intent intent = new Intent(requireContext(), CheckoutActivity.class);
-
             startActivity(intent);
         });
     }

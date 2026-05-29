@@ -30,6 +30,25 @@
             android:name=".DetailProductActivity"
             android:exported="false" />
         <activity
+            android:name=".SettingsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PurchaseHistoryActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".PaymentMethodActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CustomerServiceActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PersonalInformationActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AdminDashboardActivity"
+            android:exported="false" />
+        <activity
             android:name=".SplashActivity"
             android:exported="true">
             <intent-filter>

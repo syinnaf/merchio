@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="merchio_primary">#9B82FF</color>
+    <color name="merchio_primary_dark">#7B61FF</color>
+    <color name="merchio_primary_light">#2B2344</color>
+
+    <color name="merchio_bg">#12101A</color>
+    <color name="merchio_surface">#181424</color>
+    <color name="merchio_card">#1E1A2B</color>
+    <color name="merchio_white">#1E1A2B</color>
+
+    <color name="merchio_stroke">#4A3A75</color>
+
+    <color name="merchio_text_primary">#FFFFFF</color>
+    <color name="merchio_text_main">#FFFFFF</color>
+    <color name="merchio_text_secondary">#C7C2D8</color>
+    <color name="merchio_section_text">#B8AFFF</color>
+
+    <color name="merchio_danger">#FF6B6B</color>
+    <color name="merchio_blue">#8EA8FF</color>
+    <color name="merchio_blue_price">#8EA8FF</color>
+</resources>
