@@ -2,12 +2,21 @@
 <resources>
     <color name="merchio_primary">#8B6DFF</color>
     <color name="merchio_primary_dark">#6F52F5</color>
-    <color name="merchio_primary_light">#EEE8FF</color>
+    <color name="merchio_primary_light">#EEF0FF</color>
+
+    <color name="merchio_bg">#F8F4FF</color>
     <color name="merchio_surface">#F8F6FF</color>
-    <color name="merchio_stroke">#DDD4FF</color>
+    <color name="merchio_card">#FFFFFF</color>
+    <color name="merchio_white">#FFFFFF</color>
+
+    <color name="merchio_stroke">#D8CCFF</color>
+
+    <color name="merchio_text_primary">#111111</color>
     <color name="merchio_text_main">#1A1A1A</color>
     <color name="merchio_text_secondary">#7C7C8A</color>
-    <color name="merchio_white">#FFFFFF</color>
-    <color name="merchio_danger">#C8C8D2</color>
+    <color name="merchio_section_text">#7A6F8F</color>
+
+    <color name="merchio_danger">#E53935</color>
+    <color name="merchio_blue">#0D4CFF</color>
     <color name="merchio_blue_price">#0D5BFF</color>
 </resources>

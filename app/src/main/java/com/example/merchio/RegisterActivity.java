@@ -67,14 +67,20 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        if (password.length() < 6) {
-            edtPasswordRegister.setError("Password minimal 6 karakter");
+        if (password.length() < 8) {
+            edtPasswordRegister.setError("Password minimal 8 karakter");
             edtPasswordRegister.requestFocus();
             return;
         }
 
         if (TextUtils.isEmpty(username)) {
             edtUsername.setError("Username wajib diisi");
+            edtUsername.requestFocus();
+            return;
+        }
+
+        if (username.length() < 3) {
+            edtUsername.setError("Username minimal 3 karakter");
             edtUsername.requestFocus();
             return;
         }
@@ -99,10 +105,6 @@ public class RegisterActivity extends AppCompatActivity {
 
         // Karena form kamu belum punya field name, sementara name diisi sama dengan username.
         boolean success = dbHelper.insertUser(username, username, email, password);
-
-        Toast.makeText(this,
-                "Insert result: " + success,
-                Toast.LENGTH_LONG).show();
 
         if (success) {
             Toast.makeText(this, "Register berhasil, silakan login", Toast.LENGTH_SHORT).show();

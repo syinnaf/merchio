@@ -39,9 +39,14 @@
         <activity
             android:name=".PaymentMethodActivity"
             android:exported="false" />
-
         <activity
             android:name=".CustomerServiceActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PersonalInformationActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AdminDashboardActivity"
             android:exported="false" />
         <activity
             android:name=".SplashActivity"

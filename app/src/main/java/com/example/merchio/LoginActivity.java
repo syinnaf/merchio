@@ -31,6 +31,27 @@ public class LoginActivity extends AppCompatActivity {
         dbHelper.getWritableDatabase();
         sessionManager = new SessionManager(this);
 
+        dbHelper.ensureRoleColumnExists();
+        dbHelper.createDefaultAdminIfNeeded();
+
+        if (sessionManager.isLoggedIn()) {
+            int savedUserId = sessionManager.getUserId();
+            String role = dbHelper.getUserRole(savedUserId);
+
+            Intent intent;
+
+            if ("admin".equalsIgnoreCase(role)) {
+                intent = new Intent(LoginActivity.this, AdminDashboardActivity.class);
+            } else {
+                intent = new Intent(LoginActivity.this, MainActivity.class);
+            }
+
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         edtEmailLogin = findViewById(R.id.edtEmailLogin);
         edtPasswordLogin = findViewById(R.id.edtPasswordLogin);
         btnLogin = findViewById(R.id.btnLogin);
@@ -71,6 +92,12 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        if (password.length() < 8) {
+            edtPasswordLogin.setError("Password minimal 8 karakter");
+            edtPasswordLogin.requestFocus();
+            return;
+        }
+
         int userId = dbHelper.loginUser(email, password);
 
         if (userId != -1) {
@@ -78,7 +105,16 @@ public class LoginActivity extends AppCompatActivity {
 
             Toast.makeText(this, "Login berhasil", Toast.LENGTH_SHORT).show();
 
-            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+            String role = dbHelper.getUserRole(userId);
+
+            Intent intent;
+
+            if ("admin".equalsIgnoreCase(role)) {
+                intent = new Intent(LoginActivity.this, AdminDashboardActivity.class);
+            } else {
+                intent = new Intent(LoginActivity.this, MainActivity.class);
+            }
+
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
             finish();

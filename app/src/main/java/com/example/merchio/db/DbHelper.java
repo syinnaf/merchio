@@ -77,7 +77,8 @@ public class DbHelper extends SQLiteOpenHelper {
                         "phone TEXT, " +
                         "avatar TEXT, " +
                         "header TEXT, " +
-                        "created_at TEXT" +
+                        "created_at TEXT, " +
+                        "role TEXT DEFAULT 'customer'" +
                         ")"
         );
     }
@@ -221,6 +222,7 @@ public class DbHelper extends SQLiteOpenHelper {
         values.put("avatar", "");
         values.put("header", "");
         values.put("created_at", now());
+        values.put("role", "customer");
 
         long result = db.insert("users", null, values);
 
@@ -283,6 +285,82 @@ public class DbHelper extends SQLiteOpenHelper {
                 "SELECT * FROM users WHERE email = ?",
                 new String[]{email}
         );
+    }
+
+    public String getUserRole(int userId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT role FROM users WHERE id = ?",
+                new String[]{String.valueOf(userId)}
+        );
+
+        String role = "customer";
+
+        if (cursor.moveToFirst()) {
+            role = cursor.getString(cursor.getColumnIndexOrThrow("role"));
+        }
+
+        cursor.close();
+        return role;
+    }
+
+    public void ensureRoleColumnExists() {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        Cursor cursor = db.rawQuery("PRAGMA table_info(users)", null);
+
+        boolean roleExists = false;
+
+        while (cursor.moveToNext()) {
+            String columnName = cursor.getString(cursor.getColumnIndexOrThrow("name"));
+
+            if ("role".equals(columnName)) {
+                roleExists = true;
+                break;
+            }
+        }
+
+        cursor.close();
+
+        if (!roleExists) {
+            db.execSQL("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'customer'");
+        }
+    }
+
+    public void createDefaultAdminIfNeeded() {
+        ensureRoleColumnExists();
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT id FROM users WHERE email = ?",
+                new String[]{"admin@merchio.id"}
+        );
+
+        boolean adminExists = cursor.moveToFirst();
+        cursor.close();
+
+        if (adminExists) {
+            return;
+        }
+
+        ContentValues values = new ContentValues();
+        values.put("name", "Merchio Admin");
+        values.put("username", "admin");
+        values.put("email", "admin@merchio.id");
+        values.put("password", "admin123");
+        values.put("phone", "");
+        values.put("avatar", "");
+        values.put("header", "");
+        values.put("created_at", now());
+        values.put("role", "admin");
+
+        long result = db.insert("users", null, values);
+
+        if (result != -1) {
+            createDefaultSettings((int) result);
+        }
     }
 
     public boolean updateUserProfile(

@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.content.Intent;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
@@ -108,16 +109,17 @@ public class SettingsActivity extends AppCompatActivity {
     private void setupClicks() {
         btnBack.setOnClickListener(v -> finish());
 
-        menuPersonalInfo.setOnClickListener(v ->
-                Toast.makeText(this, "Personal Information nanti dibuat", Toast.LENGTH_SHORT).show()
-        );
+        menuPersonalInfo.setOnClickListener(v -> {
+            Intent intent = new Intent(SettingsActivity.this, PersonalInformationActivity.class);
+            startActivity(intent);
+        });
 
-        menuPayment.setOnClickListener(v ->
-                Toast.makeText(this, "Payment Method nanti dibuat", Toast.LENGTH_SHORT).show()
-        );
-
+        menuPayment.setOnClickListener(v -> {
+            Intent intent = new Intent(SettingsActivity.this, PaymentMethodActivity.class);
+            startActivity(intent);
+        });
         menuPush.setOnClickListener(v ->
-                Toast.makeText(this, "Push Notification nanti dibuat", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Demo doang", Toast.LENGTH_SHORT).show()
         );
 
         switchDarkMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
