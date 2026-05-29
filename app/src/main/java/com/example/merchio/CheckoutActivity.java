@@ -16,6 +16,7 @@ import com.example.merchio.adapters.CheckoutAdapter;
 import com.example.merchio.SessionManager;
 import com.example.merchio.db.DbHelper;
 import com.example.merchio.models.CartItem;
+import com.example.merchio.models.Product;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -38,6 +39,8 @@ public class CheckoutActivity extends AppCompatActivity {
             rbWallet;
 
     Button btnBuy;
+
+    private boolean isBuyNow = false;
 
     DbHelper dbHelper;
     SessionManager sessionManager;
@@ -83,7 +86,18 @@ public class CheckoutActivity extends AppCompatActivity {
         );
 
         loadAddress();
-        loadCheckoutItems();
+
+        isBuyNow =
+                getIntent().getBooleanExtra(
+                        "buy_now",
+                        false
+                );
+
+        if(isBuyNow){
+            loadBuyNowItem();
+        }else{
+            loadCheckoutItems();
+        }
 
         setupShipping();
 
@@ -111,6 +125,68 @@ public class CheckoutActivity extends AppCompatActivity {
 
         rbExpress.setChecked(true);
         rbCard.setChecked(true);
+    }
+
+    private void loadBuyNowItem() {
+
+        Product product =
+                getIntent().getParcelableExtra(
+                        "product"
+                );
+
+        int qty =
+                getIntent().getIntExtra(
+                        "qty",
+                        1
+                );
+
+        String type =
+                getIntent().getStringExtra(
+                        "type"
+                );
+
+        if(product == null){
+            finish();
+            return;
+        }
+
+        CartItem item = new CartItem();
+
+        item.setProductId(
+                String.valueOf(product.getId())
+        );
+
+        item.setProductName(
+                product.getName()
+        );
+
+        item.setProductImage(
+                product.getImageUrl()
+        );
+
+        item.setProductPrice(
+                product.getPrice()
+        );
+
+        item.setQuantity(qty);
+
+        item.setType(type);
+
+        checkoutItems.add(item);
+
+        subtotal =
+                product.getPrice()
+                        * qty;
+
+        CheckoutAdapter adapter =
+                new CheckoutAdapter(
+                        this,
+                        checkoutItems
+                );
+
+        rvCheckout.setAdapter(adapter);
+
+        calculateTotal();
     }
 
     private void loadAddress() {
@@ -305,16 +381,40 @@ public class CheckoutActivity extends AppCompatActivity {
         String estimatedArrival =
                 rbExpress.isChecked() ? "1-2 Days" : "4-5 Days";
 
-        long orderId = dbHelper.checkoutFromCart(
-                userId,
-                paymentMethod,
-                shippingMethod,
-                addressId,
-                fullAddress,
-                shippingCost,
-                tax,
-                estimatedArrival
-        );
+        long orderId;
+
+        if(isBuyNow){
+
+            CartItem item =
+                    checkoutItems.get(0);
+
+            orderId =
+                    dbHelper.createBuyNowOrder(
+                            userId,
+                            item,
+                            paymentMethod,
+                            shippingMethod,
+                            addressId,
+                            fullAddress,
+                            shippingCost,
+                            tax,
+                            estimatedArrival
+                    );
+
+        }else{
+
+            orderId =
+                    dbHelper.checkoutFromCart(
+                            userId,
+                            paymentMethod,
+                            shippingMethod,
+                            addressId,
+                            fullAddress,
+                            shippingCost,
+                            tax,
+                            estimatedArrival
+                    );
+        }
 
         if (orderId != -1) {
 

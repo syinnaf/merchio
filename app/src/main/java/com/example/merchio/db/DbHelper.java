@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.text.TextUtils;
+import com.example.merchio.models.CartItem;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -1033,6 +1034,73 @@ public class DbHelper extends SQLiteOpenHelper {
             db.endTransaction();
             cartCursor.close();
         }
+
+        return orderId;
+    }
+
+    public long createBuyNowOrder(
+            int userId,
+            CartItem item,
+            String paymentMethod,
+            String shippingMethod,
+            int addressId,
+            String fullAddress,
+            int shippingCost,
+            int tax,
+            String estimatedArrival
+    ) {
+
+        SQLiteDatabase db =
+                this.getWritableDatabase();
+
+        int totalPrice =
+                (item.getProductPrice() * item.getQuantity())
+                        + shippingCost
+                        + tax;
+
+        ContentValues orderValues =
+                new ContentValues();
+
+        orderValues.put("user_id", userId);
+        orderValues.put("order_code", "MRC" + System.currentTimeMillis());
+        orderValues.put("total_price", totalPrice);
+        orderValues.put("shipping_price", shippingCost);
+        orderValues.put("tax", tax);
+        orderValues.put("payment_method", paymentMethod);
+        orderValues.put("shipping_method", shippingMethod);
+        orderValues.put("address_id", addressId);
+        orderValues.put("address", fullAddress);
+        orderValues.put("status", STATUS_PACKING);
+        orderValues.put("order_date", now());
+        orderValues.put("estimated_arrival", estimatedArrival);
+
+        long orderId =
+                db.insert(
+                        "orders",
+                        null,
+                        orderValues
+                );
+
+        if(orderId == -1){
+            return -1;
+        }
+
+        ContentValues detail =
+                new ContentValues();
+
+        detail.put("order_id", orderId);
+        detail.put("product_id", item.getProductId());
+        detail.put("product_name", item.getProductName());
+        detail.put("product_image", item.getProductImage());
+        detail.put("price", item.getProductPrice());
+        detail.put("quantity", item.getQuantity());
+        detail.put("type", item.getType());
+
+        db.insert(
+                "order_items",
+                null,
+                detail
+        );
 
         return orderId;
     }
