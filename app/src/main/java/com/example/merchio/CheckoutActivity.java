@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.merchio.adapters.CheckoutAdapter;
+import com.example.merchio.SessionManager;
 import com.example.merchio.db.DbHelper;
 import com.example.merchio.models.CartItem;
 
@@ -39,11 +40,12 @@ public class CheckoutActivity extends AppCompatActivity {
     Button btnBuy;
 
     DbHelper dbHelper;
+    SessionManager sessionManager;
 
     List<CartItem> checkoutItems =
             new ArrayList<>();
 
-    int userId = 1;
+    int userId = -1;
 
     int subtotal = 0;
     int shippingCost = 15000;
@@ -61,6 +63,20 @@ public class CheckoutActivity extends AppCompatActivity {
         initViews();
 
         dbHelper = new DbHelper(this);
+
+        sessionManager = new SessionManager(this);
+        userId = sessionManager.getUserId();
+
+        if (userId == -1) {
+            Toast.makeText(
+                    this,
+                    "User belum login",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            finish();
+            return;
+        }
 
         rvCheckout.setLayoutManager(
                 new LinearLayoutManager(this)
@@ -102,7 +118,7 @@ public class CheckoutActivity extends AppCompatActivity {
         Cursor cursor =
                 dbHelper.getDefaultAddress(userId);
 
-        if(cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
 
             addressId =
                     cursor.getInt(
@@ -142,9 +158,17 @@ public class CheckoutActivity extends AppCompatActivity {
                             + postal;
 
             txtAddress.setText(fullAddress);
+
+        } else {
+
+            txtAddress.setText(
+                    "Belum ada alamat.\nSilakan tambahkan alamat terlebih dahulu."
+            );
         }
 
-        cursor.close();
+        if (cursor != null) {
+            cursor.close();
+        }
     }
 
     private void loadCheckoutItems() {
@@ -255,6 +279,22 @@ public class CheckoutActivity extends AppCompatActivity {
     }
 
     private void processOrder() {
+
+        if (checkoutItems.isEmpty()) {
+
+            Toast.makeText(
+                    this,
+                    "Cart kosong",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            return;
+        }
+
+        if (addressId == 0) {
+            addressId = 0;
+            fullAddress = "Alamat demo Merchio\nJakarta, Indonesia";
+        }
 
         String paymentMethod =
                 rbCard.isChecked() ? "Credit Card" : "Digital Wallet";
