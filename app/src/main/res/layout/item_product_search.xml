@@ -18,13 +18,15 @@
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="170dp"
+            android:padding="12dp"
             android:background="#F3F1FA">
 
             <ImageView
                 android:id="@+id/img_product"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:scaleType="centerCrop"/>
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"/>
         </FrameLayout>
 
         <!-- CONTENT -->

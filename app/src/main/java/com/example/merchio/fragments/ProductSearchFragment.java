@@ -92,7 +92,7 @@ public class ProductSearchFragment extends Fragment {
                 new GridLayoutManager(requireContext(), 2)
         );
 
-        int spacing = 16;
+        int spacing = 20;
 
         rvProducts.addItemDecoration(
                 new GridSpacingItemDecoration(2, spacing, true)

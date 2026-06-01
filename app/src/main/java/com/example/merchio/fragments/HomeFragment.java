@@ -130,6 +130,12 @@ public class HomeFragment extends Fragment
                 )
         );
 
+        int spacing = 20;
+
+        rvPopular.addItemDecoration(
+                new GridSpacingItemDecoration(2, spacing, true)
+        );
+
         rvPopular.setNestedScrollingEnabled(false);
         rvCategory.setNestedScrollingEnabled(false);
     }
