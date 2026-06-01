@@ -63,6 +63,10 @@ public class CheckoutActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_checkout);
 
+        TextView btnBack = findViewById(R.id.btn_back);
+
+        btnBack.setOnClickListener(v -> finish());
+
         initViews();
 
         dbHelper = new DbHelper(this);

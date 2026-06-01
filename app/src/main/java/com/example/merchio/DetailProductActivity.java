@@ -42,6 +42,9 @@ public class DetailProductActivity extends AppCompatActivity
 
         ImageButton btnCart = findViewById(R.id.btnCart);
         Button btnBuyNow = findViewById(R.id.btnBuyNow);
+        TextView btnBack = findViewById(R.id.btn_back);
+
+        btnBack.setOnClickListener(v -> finish());
 
         tvName.setText(product.getName());
         tvPrice.setText(formatRupiah(product.getPrice()));
