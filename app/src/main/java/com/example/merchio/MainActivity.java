@@ -76,7 +76,6 @@ public class MainActivity extends AppCompatActivity {
             database = dbHelper.getWritableDatabase();
 
             if (database != null && database.isOpen()) {
-                Toast.makeText(this, "Database connected", Toast.LENGTH_SHORT).show();
                 Log.d("DB_TEST", "Database connected successfully");
                 Log.d("DB_TEST", "Database path: " + database.getPath());
 
