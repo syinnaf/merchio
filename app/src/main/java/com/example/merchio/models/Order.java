@@ -16,6 +16,16 @@ public class Order {
     private String orderDate;
     private String estimatedArrival;
 
+    private int isReceived;
+
+    public int getIsReceived() {
+        return isReceived;
+    }
+
+    public void setIsReceived(int isReceived) {
+        this.isReceived = isReceived;
+    }
+
     public Order() {
     }
 

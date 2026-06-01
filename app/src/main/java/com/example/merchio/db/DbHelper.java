@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.text.TextUtils;
 import com.example.merchio.models.CartItem;
+import com.example.merchio.models.OrderItem;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -15,7 +16,7 @@ import java.util.Locale;
 public class DbHelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "merchio.db";
-    public static final int DATABASE_VERSION = 3;
+    public static final int DATABASE_VERSION = 4;
 
     public static final String STATUS_PACKING = "packing";
     public static final String STATUS_SHIPPING = "shipping";
@@ -146,6 +147,7 @@ public class DbHelper extends SQLiteOpenHelper {
                         "address_id INTEGER, " +
                         "address TEXT, " +
                         "status TEXT, " +
+                        "is_received INTEGER DEFAULT 0, " +
                         "order_date TEXT, " +
                         "estimated_arrival TEXT" +
                         ")"
@@ -192,8 +194,15 @@ public class DbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        dropAllTables(db);
-        onCreate(db);
+
+        if (oldVersion < 4) {
+            try {
+                db.execSQL(
+                        "ALTER TABLE orders ADD COLUMN is_received INTEGER DEFAULT 0"
+                );
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     private void dropAllTables(SQLiteDatabase db) {
@@ -1151,21 +1160,33 @@ public class DbHelper extends SQLiteOpenHelper {
         );
     }
 
-    public Cursor getActiveOrders(int userId) {
-        SQLiteDatabase db = this.getReadableDatabase();
+    public Cursor getActiveOrders(int userId){
+
+        SQLiteDatabase db = getReadableDatabase();
 
         return db.rawQuery(
-                "SELECT * FROM orders WHERE user_id = ? AND LOWER(status) IN ('packing', 'shipping') ORDER BY id DESC",
-                new String[]{String.valueOf(userId)}
+                "SELECT * FROM orders " +
+                        "WHERE user_id=? " +
+                        "AND is_received=0 " +
+                        "ORDER BY id DESC",
+                new String[]{
+                        String.valueOf(userId)
+                }
         );
     }
 
-    public Cursor getPastOrders(int userId) {
-        SQLiteDatabase db = this.getReadableDatabase();
+    public Cursor getPastOrders(int userId){
+
+        SQLiteDatabase db = getReadableDatabase();
 
         return db.rawQuery(
-                "SELECT * FROM orders WHERE user_id = ? AND LOWER(status) = 'delivered' ORDER BY id DESC",
-                new String[]{String.valueOf(userId)}
+                "SELECT * FROM orders " +
+                        "WHERE user_id=? " +
+                        "AND is_received=1 " +
+                        "ORDER BY id DESC",
+                new String[]{
+                        String.valueOf(userId)
+                }
         );
     }
 
@@ -1204,6 +1225,95 @@ public class DbHelper extends SQLiteOpenHelper {
         );
 
         return result > 0;
+    }
+
+    public boolean confirmOrderReceived(long orderId) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put("is_received", 1);
+
+        int result = db.update(
+                "orders",
+                values,
+                "id = ?",
+                new String[]{String.valueOf(orderId)}
+        );
+
+        return result > 0;
+    }
+
+    public boolean isOrderReceived(long orderId) {
+
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT is_received FROM orders WHERE id = ?",
+                new String[]{String.valueOf(orderId)}
+        );
+
+        boolean received = false;
+
+        if(cursor.moveToFirst()){
+            received =
+                    cursor.getInt(
+                            cursor.getColumnIndexOrThrow("is_received")
+                    ) == 1;
+        }
+
+        cursor.close();
+
+        return received;
+    }
+
+    public OrderItem getFirstOrderItem(long orderId){
+
+        SQLiteDatabase db = getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM order_items WHERE order_id=? LIMIT 1",
+                new String[]{String.valueOf(orderId)}
+        );
+
+        OrderItem item = null;
+
+        if(cursor.moveToFirst()){
+
+            item = new OrderItem();
+
+            item.setId(
+                    cursor.getInt(cursor.getColumnIndexOrThrow("id"))
+            );
+
+            item.setOrderId(
+                    cursor.getInt(cursor.getColumnIndexOrThrow("order_id"))
+            );
+
+            item.setProductId(
+                    cursor.getString(cursor.getColumnIndexOrThrow("product_id"))
+            );
+
+            item.setProductName(
+                    cursor.getString(cursor.getColumnIndexOrThrow("product_name"))
+            );
+
+            item.setProductImage(
+                    cursor.getString(cursor.getColumnIndexOrThrow("product_image"))
+            );
+
+            item.setPrice(
+                    cursor.getInt(cursor.getColumnIndexOrThrow("price"))
+            );
+
+            item.setQuantity(
+                    cursor.getInt(cursor.getColumnIndexOrThrow("quantity"))
+            );
+        }
+
+        cursor.close();
+
+        return item;
     }
 
     public void normalizeLegacyOrderStatuses(int userId) {
