@@ -3,17 +3,30 @@ package com.example.merchio;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.merchio.adapters.HistoryAdapter;
 import com.example.merchio.db.DbHelper;
+import com.example.merchio.models.OrderHistory;
+import com.example.merchio.models.OrderItem;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class PurchaseHistoryActivity extends AppCompatActivity {
 
-    private TextView btnBack, tvOrderSummary;
+    private TextView btnBack;
+
+    private RecyclerView rvActiveOrders;
+    private RecyclerView rvPastOrders;
 
     private DbHelper dbHelper;
     private SessionManager sessionManager;
+
     private int userId = -1;
 
     @Override
@@ -22,10 +35,24 @@ public class PurchaseHistoryActivity extends AppCompatActivity {
         setContentView(R.layout.activity_purchase_history);
 
         btnBack = findViewById(R.id.btn_back);
-        tvOrderSummary = findViewById(R.id.tv_order_summary);
+
+        rvActiveOrders =
+                findViewById(R.id.rvActiveOrders);
+
+        rvPastOrders =
+                findViewById(R.id.rvPastOrders);
+
+        rvActiveOrders.setLayoutManager(
+                new LinearLayoutManager(this)
+        );
+
+        rvPastOrders.setLayoutManager(
+                new LinearLayoutManager(this)
+        );
 
         dbHelper = new DbHelper(this);
         sessionManager = new SessionManager(this);
+
         userId = sessionManager.getUserId();
 
         btnBack.setOnClickListener(v -> finish());
@@ -34,35 +61,134 @@ public class PurchaseHistoryActivity extends AppCompatActivity {
     }
 
     private void loadOrders() {
-        if (userId == -1) {
-            tvOrderSummary.setText("Silakan login dulu.");
+
+        if(userId == -1){
             return;
         }
 
-        Cursor cursor = dbHelper.getOrdersByUser(userId);
+        List<OrderHistory> activeList =
+                new ArrayList<>();
 
-        if (cursor.getCount() == 0) {
-            tvOrderSummary.setText("Belum ada order.");
-            cursor.close();
-            return;
+        List<OrderHistory> pastList =
+                new ArrayList<>();
+
+        Cursor activeCursor =
+                dbHelper.getActiveOrders(userId);
+
+        while(activeCursor.moveToNext()){
+
+            long orderId =
+                    activeCursor.getLong(
+                            activeCursor.getColumnIndexOrThrow("id")
+                    );
+
+            String status =
+                    activeCursor.getString(
+                            activeCursor.getColumnIndexOrThrow("status")
+                    );
+
+            int totalPrice =
+                    activeCursor.getInt(
+                            activeCursor.getColumnIndexOrThrow("total_price")
+                    );
+
+            boolean isReceived =
+                    activeCursor.getInt(
+                            activeCursor.getColumnIndexOrThrow("is_received")
+                    ) == 1;
+
+            OrderItem firstItem =
+                    dbHelper.getFirstOrderItem(orderId);
+
+            if(firstItem != null){
+
+                activeList.add(
+                        new OrderHistory(
+                                orderId,
+                                firstItem.getProductName(),
+                                firstItem.getProductImage(),
+                                status,
+                                totalPrice,
+                                isReceived
+                        )
+                );
+            }
         }
 
-        StringBuilder builder = new StringBuilder();
+        activeCursor.close();
 
-        while (cursor.moveToNext()) {
-            String orderCode = cursor.getString(cursor.getColumnIndexOrThrow("order_code"));
-            String status = cursor.getString(cursor.getColumnIndexOrThrow("status"));
-            int total = cursor.getInt(cursor.getColumnIndexOrThrow("total_price"));
+        Cursor pastCursor =
+                dbHelper.getPastOrders(userId);
 
-            builder.append(orderCode)
-                    .append("\nStatus: ")
-                    .append(status)
-                    .append("\nTotal: Rp")
-                    .append(total)
-                    .append("\n\n");
+        while(pastCursor.moveToNext()){
+
+            long orderId =
+                    pastCursor.getLong(
+                            pastCursor.getColumnIndexOrThrow("id")
+                    );
+
+            String status =
+                    pastCursor.getString(
+                            pastCursor.getColumnIndexOrThrow("status")
+                    );
+
+            int totalPrice =
+                    pastCursor.getInt(
+                            pastCursor.getColumnIndexOrThrow("total_price")
+                    );
+
+            boolean isReceived =
+                    pastCursor.getInt(
+                            pastCursor.getColumnIndexOrThrow("is_received")
+                    ) == 1;
+
+            OrderItem firstItem =
+                    dbHelper.getFirstOrderItem(orderId);
+
+            if(firstItem != null){
+
+                pastList.add(
+                        new OrderHistory(
+                                orderId,
+                                firstItem.getProductName(),
+                                firstItem.getProductImage(),
+                                status,
+                                totalPrice,
+                                isReceived
+                        )
+                );
+            }
         }
 
-        cursor.close();
-        tvOrderSummary.setText(builder.toString().trim());
+        pastCursor.close();
+
+        rvActiveOrders.setAdapter(
+                new HistoryAdapter(
+                        this,
+                        activeList,
+                        orderId -> {
+
+                            dbHelper.confirmOrderReceived(
+                                    orderId
+                            );
+
+                            Toast.makeText(
+                                    this,
+                                    "Order confirmed",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+
+                            loadOrders();
+                        }
+                )
+        );
+
+        rvPastOrders.setAdapter(
+                new HistoryAdapter(
+                        this,
+                        pastList,
+                        null
+                )
+        );
     }
 }
