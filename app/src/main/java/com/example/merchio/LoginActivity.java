@@ -32,6 +32,7 @@ public class LoginActivity extends AppCompatActivity {
         sessionManager = new SessionManager(this);
 
         dbHelper.ensureRoleColumnExists();
+        dbHelper.ensureUserActiveColumnExists();
         dbHelper.createDefaultAdminIfNeeded();
 
         if (sessionManager.isLoggedIn()) {
