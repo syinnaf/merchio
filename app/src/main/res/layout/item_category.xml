@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="8dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:background="@drawable/selector_category">
+
+    <!-- Icon kategori dalam lingkaran -->
+    <ImageView
+        android:id="@+id/img_category_icon"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:padding="12dp"
+        android:background="@drawable/bg_category_icon"
+        android:src="@drawable/ic_cart"
+        android:scaleType="centerInside"/>
+
+    <!-- Nama kategori -->
+    <TextView
+        android:id="@+id/txt_category_name"
+        android:layout_width="64dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="Category"
+        android:textSize="11sp"
+        android:textColor="@drawable/selector_category_text"
+        android:gravity="center"
+        android:maxLines="2"
+        android:ellipsize="end"/>
+
+</LinearLayout>

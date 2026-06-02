@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Background putih -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF" />
+        </shape>
+    </item>
+
+    <!-- Blur biru muda kiri atas -->
+    <item
+        android:width="260dp"
+        android:height="260dp"
+        android:left="-80dp"
+        android:top="-70dp">
+        <shape android:shape="oval">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="150dp"
+                android:centerColor="#DCE6FF"
+                android:endColor="#00DCE6FF" />
+        </shape>
+    </item>
+
+    <!-- Blur ungu/pink kanan bawah -->
+    <item
+        android:width="300dp"
+        android:height="300dp"
+        android:right="-90dp"
+        android:bottom="-80dp"
+        android:gravity="bottom|right">
+        <shape android:shape="oval">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="170dp"
+                android:centerColor="#F0D8FF"
+                android:endColor="#00F0D8FF" />
+        </shape>
+    </item>
+
+</layer-list>
