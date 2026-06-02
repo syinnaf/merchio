@@ -89,13 +89,21 @@ public class ProductSearchFragment extends Fragment {
 
         // SETUP RECYCLERVIEW
         rvProducts.setLayoutManager(
-                new GridLayoutManager(requireContext(), 2)
+                new GridLayoutManager(
+                        requireContext(),
+                        2
+                )
         );
 
-        int spacing = 40;
+        int spacing = getResources()
+                .getDimensionPixelSize(R.dimen.grid_spacing);
 
         rvProducts.addItemDecoration(
-                new GridSpacingItemDecoration(2, spacing, true)
+                new GridSpacingItemDecoration(
+                        2,
+                        spacing,
+                        true
+                )
         );
 
         // ADAPTER

@@ -115,6 +115,7 @@ public class HomeFragment extends Fragment
     }
 
     private void setupRecyclerViews() {
+
         rvCategory.setLayoutManager(
                 new LinearLayoutManager(
                         requireContext(),
@@ -123,17 +124,23 @@ public class HomeFragment extends Fragment
                 )
         );
 
-        rvPopular.setLayoutManager(
+        GridLayoutManager gridLayoutManager =
                 new GridLayoutManager(
                         requireContext(),
                         2
-                )
-        );
+                );
 
-        int spacing = 40;
+        rvPopular.setLayoutManager(gridLayoutManager);
+
+        int spacing = getResources()
+                .getDimensionPixelSize(R.dimen.grid_spacing);
 
         rvPopular.addItemDecoration(
-                new GridSpacingItemDecoration(2, spacing, true)
+                new GridSpacingItemDecoration(
+                        2,
+                        spacing,
+                        true
+                )
         );
 
         rvPopular.setNestedScrollingEnabled(false);
