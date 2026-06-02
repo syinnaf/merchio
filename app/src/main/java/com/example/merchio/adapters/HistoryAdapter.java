@@ -30,6 +30,21 @@ public class HistoryAdapter
     private final Context context;
     private final List<OrderHistory> list;
     private final OnConfirmClick listener;
+    private String labelStatus(String status) {
+        if (status == null) return "Packing";
+        if (status.equalsIgnoreCase(DbHelper.STATUS_SHIPPING)) return "Shipping";
+        if (status.equalsIgnoreCase(DbHelper.STATUS_DELIVERED)) return "Delivered";
+        if (status.equalsIgnoreCase(DbHelper.STATUS_CANCELLED)) return "Cancelled";
+        return "Packing";
+    }
+
+    private int statusBackground(String status) {
+        if (status == null) return R.drawable.bg_status_packing;
+        if (status.equalsIgnoreCase(DbHelper.STATUS_SHIPPING)) return R.drawable.bg_status_shipping;
+        if (status.equalsIgnoreCase(DbHelper.STATUS_DELIVERED)) return R.drawable.bg_status_delivered;
+        if (status.equalsIgnoreCase(DbHelper.STATUS_CANCELLED)) return R.drawable.bg_status_cancelled;
+        return R.drawable.bg_status_packing;
+    }
 
     public HistoryAdapter(
             Context context,
@@ -76,6 +91,9 @@ public class HistoryAdapter
         holder.txtStatus.setText(
                 item.status.toUpperCase()
         );
+
+        holder.txtStatus.setText(labelStatus(item.status));
+        holder.txtStatus.setBackgroundResource(statusBackground(item.status));
 
         Glide.with(context)
                 .load(item.image)

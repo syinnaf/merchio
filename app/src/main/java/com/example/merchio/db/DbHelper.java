@@ -37,12 +37,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
         status = status.toLowerCase().trim();
 
-        if (status.equals("confirmed")) {
+        if (status.equals(STATUS_PACKING)) {
             return STATUS_PACKING;
-        }
-
-        if (status.equals("shipped") || status.equals("in_transit")) {
-            return STATUS_SHIPPING;
         }
 
         if (status.equals(STATUS_DELIVERED)) {
