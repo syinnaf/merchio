@@ -100,6 +100,9 @@ public class PurchaseHistoryActivity extends AppCompatActivity {
             OrderItem firstItem =
                     dbHelper.getFirstOrderItem(orderId);
 
+            int itemCount =
+                    dbHelper.getOrderItemCount(orderId);
+
             if(firstItem != null){
 
                 activeList.add(
@@ -109,7 +112,8 @@ public class PurchaseHistoryActivity extends AppCompatActivity {
                                 firstItem.getProductImage(),
                                 status,
                                 totalPrice,
-                                isReceived
+                                isReceived,
+                                itemCount
                         )
                 );
             }
@@ -145,6 +149,9 @@ public class PurchaseHistoryActivity extends AppCompatActivity {
             OrderItem firstItem =
                     dbHelper.getFirstOrderItem(orderId);
 
+            int itemCount =
+                    dbHelper.getOrderItemCount(orderId);
+
             if(firstItem != null){
 
                 pastList.add(
@@ -154,7 +161,8 @@ public class PurchaseHistoryActivity extends AppCompatActivity {
                                 firstItem.getProductImage(),
                                 status,
                                 totalPrice,
-                                isReceived
+                                isReceived,
+                                itemCount
                         )
                 );
             }

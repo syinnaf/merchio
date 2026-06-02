@@ -8,6 +8,7 @@ public class OrderHistory {
     public String status;
     public int totalPrice;
     public boolean isReceived;
+    public int itemCount;
 
     public OrderHistory(
             long orderId,
@@ -15,7 +16,8 @@ public class OrderHistory {
             String image,
             String status,
             int totalPrice,
-            boolean isReceived
+            boolean isReceived,
+            int itemCount
     ){
         this.orderId = orderId;
         this.productName = productName;
@@ -23,5 +25,6 @@ public class OrderHistory {
         this.status = status;
         this.totalPrice = totalPrice;
         this.isReceived = isReceived;
+        this.itemCount = itemCount;
     }
 }

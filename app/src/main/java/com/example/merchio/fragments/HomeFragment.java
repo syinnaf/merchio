@@ -130,7 +130,7 @@ public class HomeFragment extends Fragment
                 )
         );
 
-        int spacing = 20;
+        int spacing = 40;
 
         rvPopular.addItemDecoration(
                 new GridSpacingItemDecoration(2, spacing, true)
