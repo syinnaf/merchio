@@ -16,6 +16,7 @@ import androidx.annotation.Nullable;
 
 import com.bumptech.glide.Glide;
 import com.example.merchio.R;
+import com.example.merchio.SessionManager;
 import com.example.merchio.db.DbHelper;
 import com.example.merchio.models.Product;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
@@ -195,6 +196,7 @@ public class ProductActionBottomSheetDialogFragment
                 );
 
                 if (success) {
+
                     Toast.makeText(
                             requireContext(),
                             "Added to cart",

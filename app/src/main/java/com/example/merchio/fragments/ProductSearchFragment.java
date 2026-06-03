@@ -127,6 +127,7 @@ public class ProductSearchFragment extends Fragment {
 
                     @Override
                     public void onAddToCartClick(Product product) {
+
                         if (userId == -1) {
                             Toast.makeText(
                                     requireContext(),
@@ -154,35 +155,15 @@ public class ProductSearchFragment extends Fragment {
                             return;
                         }
 
-                        String productType = product.getType() != null
-                                ? product.getType()
-                                : "Default";
-
-                        boolean success = dbHelper.addToCart(
-                                userId,
-                                product.getId(),
-                                product.getName(),
-                                product.getImageUrl(),
-                                product.getPrice(),
-                                productType,
-                                1,
-                                product.getStock()
-                        );
-
-                        if (success) {
-                            Toast.makeText(
-                                    requireContext(),
-                                    product.getName() + " ditambahkan ke cart",
-                                    Toast.LENGTH_SHORT
-                            ).show();
-
-                        } else {
-                            Toast.makeText(
-                                    requireContext(),
-                                    "Gagal menambahkan ke cart",
-                                    Toast.LENGTH_SHORT
-                            ).show();
-                        }
+                        ProductActionBottomSheetDialogFragment
+                                .newInstance(
+                                        product,
+                                        ProductActionBottomSheetDialogFragment.MODE_ADD_TO_CART
+                                )
+                                .show(
+                                        getParentFragmentManager(),
+                                        "product_action"
+                                );
                     }
                 }
         );
