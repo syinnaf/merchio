@@ -32,7 +32,9 @@
         <activity
             android:name=".PurchaseHistoryActivity"
             android:exported="false" />
-
+        <activity
+            android:name=".PurchaseHistoryDetailActivity"
+            android:exported="false" />
         <activity
             android:name=".PaymentMethodActivity"
             android:exported="false" />

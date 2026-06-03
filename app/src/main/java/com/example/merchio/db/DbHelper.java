@@ -1004,6 +1004,28 @@ public class DbHelper extends SQLiteOpenHelper {
         return db.insert("orders", null, values);
     }
 
+    public int getOrderItemCount(long orderId) {
+
+        SQLiteDatabase db = getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT COUNT(*) FROM order_items WHERE order_id = ?",
+                new String[]{
+                        String.valueOf(orderId)
+                }
+        );
+
+        int count = 0;
+
+        if(cursor.moveToFirst()){
+            count = cursor.getInt(0);
+        }
+
+        cursor.close();
+
+        return count;
+    }
+
     public boolean insertOrderItem(
             long orderId,
             String productId,
