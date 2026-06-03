@@ -15,7 +15,7 @@ import java.util.Locale;
 public class DbHelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "merchio.db";
-    public static final int DATABASE_VERSION = 3;
+    public static final int DATABASE_VERSION = 5;
 
     public static final String STATUS_PACKING = "packing";
     public static final String STATUS_SHIPPING = "shipping";

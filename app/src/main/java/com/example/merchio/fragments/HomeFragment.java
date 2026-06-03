@@ -316,6 +316,7 @@ public class HomeFragment extends Fragment
 
     @Override
     public void onAddToCartClick(Product product) {
+
         if (userId == -1) {
             Toast.makeText(
                     requireContext(),
@@ -343,37 +344,16 @@ public class HomeFragment extends Fragment
             return;
         }
 
-        String productId = safeText(product.getId(), "0");
-        String productName = safeText(product.getName(), "Produk");
-        String productImage = safeText(product.getImageUrl(), "");
-        String productType = safeText(product.getType(), "Default");
-
-        boolean success = dbHelper.addToCart(
-                userId,
-                productId,
-                productName,
-                productImage,
-                product.getPrice(),
-                productType,
-                1,
-                product.getStock()
-        );
-
-        if (success) {
-            Toast.makeText(
-                    requireContext(),
-                    productName + " masuk cart",
-                    Toast.LENGTH_SHORT
-            ).show();
-        } else {
-            Toast.makeText(
-                    requireContext(),
-                    "Gagal menambahkan ke cart",
-                    Toast.LENGTH_SHORT
-            ).show();
-        }
+        ProductActionBottomSheetDialogFragment
+                .newInstance(
+                        product,
+                        ProductActionBottomSheetDialogFragment.MODE_ADD_TO_CART
+                )
+                .show(
+                        getParentFragmentManager(),
+                        "product_action"
+                );
     }
-
     @Override
     public void onCategoryClick(Category category) {
         if (category != null) {
