@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+import android.widget.EditText;
 
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -32,11 +33,11 @@ import com.example.merchio.models.Category;
 import com.example.merchio.models.Product;
 import com.example.merchio.receivers.NetworkReceiver;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -58,6 +59,8 @@ public class HomeFragment extends Fragment
 
     private int userId = -1;
     private List<Product> productList = new ArrayList<>();
+
+    private EditText etSearch;
 
     private final Handler bannerHandler = new Handler(Looper.getMainLooper());
     private int bannerSize = 0;
@@ -94,6 +97,7 @@ public class HomeFragment extends Fragment
         initViews(view);
         initHelpers();
         setupRecyclerViews();
+        setupSearch();
         setupNetworkReceiver();
         fetchProducts();
         fetchCategories();
@@ -105,6 +109,8 @@ public class HomeFragment extends Fragment
         rvCategory = view.findViewById(R.id.rvCategory);
         rvPopular = view.findViewById(R.id.rvPopular);
         bannerViewPager = view.findViewById(R.id.bannerViewPager);
+
+        etSearch = view.findViewById(R.id.etSearch);
     }
 
     private void initHelpers() {
@@ -161,6 +167,20 @@ public class HomeFragment extends Fragment
                 networkReceiver,
                 filter
         );
+    }
+
+    private void setupSearch() {
+
+        etSearch.setFocusable(false);
+        etSearch.setClickable(true);
+
+        etSearch.setOnClickListener(v -> {
+
+            BottomNavigationView bottomNav =
+                    requireActivity().findViewById(R.id.bottomNav);
+
+            bottomNav.setSelectedItemId(R.id.nav_search);
+        });
     }
 
     @Override
