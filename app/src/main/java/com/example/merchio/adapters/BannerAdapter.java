@@ -55,13 +55,13 @@ public class BannerAdapter extends RecyclerView.Adapter<BannerAdapter.BannerView
         holder.txtTitle.setText(banner.getTitle());
         holder.txtSubtitle.setText(banner.getSubtitle());
 
-        if (!TextUtils.isEmpty(banner.getImageUrl())) {
-            Glide.with(context)
-                    .load(banner.getImageUrl())
-                    .apply(new RequestOptions().transform(new RoundedCorners(24)))
-                    .placeholder(R.drawable.ic_cart)
-                    .into(holder.imgBanner);
-        }
+        Glide.with(context)
+                .load(banner.getImageUrl())
+                .skipMemoryCache(true)
+                .dontAnimate()
+                .apply(new RequestOptions().transform(new RoundedCorners(24)))
+                .placeholder(R.drawable.ic_cart)
+                .into(holder.imgBanner);
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {

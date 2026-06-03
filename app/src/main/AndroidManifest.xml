@@ -15,9 +15,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Merchio">
         <activity
-            android:name=".History"
-            android:exported="false" />
-        <activity
             android:name=".MainActivity"
             android:exported="false" />
         <activity
@@ -35,7 +32,9 @@
         <activity
             android:name=".PurchaseHistoryActivity"
             android:exported="false" />
-
+        <activity
+            android:name=".PurchaseHistoryDetailActivity"
+            android:exported="false" />
         <activity
             android:name=".PaymentMethodActivity"
             android:exported="false" />
@@ -47,6 +46,12 @@
             android:exported="false" />
         <activity
             android:name=".AdminDashboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ManageOrdersActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ManageUsersActivity"
             android:exported="false" />
         <activity
             android:name=".SplashActivity"

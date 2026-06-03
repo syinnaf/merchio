@@ -25,7 +25,7 @@ public class OrderSuccessAdapter
     private final List<CartItem> itemList;
 
     public OrderSuccessAdapter(Context context, List<CartItem> itemList) {
-        this.context  = context;
+        this.context = context;
         this.itemList = itemList;
     }
 

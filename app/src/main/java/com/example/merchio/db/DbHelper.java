@@ -5,8 +5,10 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteConstraintException;
 import android.text.TextUtils;
 import com.example.merchio.models.CartItem;
+import com.example.merchio.models.OrderItem;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -20,6 +22,7 @@ public class DbHelper extends SQLiteOpenHelper {
     public static final String STATUS_PACKING = "packing";
     public static final String STATUS_SHIPPING = "shipping";
     public static final String STATUS_DELIVERED = "delivered";
+    public static final String STATUS_CANCELLED = "cancelled";
 
     public DbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -52,6 +55,10 @@ public class DbHelper extends SQLiteOpenHelper {
             return STATUS_SHIPPING;
         }
 
+        if (status.equals(STATUS_CANCELLED) || status.equals("canceled") || status.equals("cancel")) {
+            return STATUS_CANCELLED;
+        }
+
         return STATUS_PACKING;
     }
 
@@ -79,7 +86,8 @@ public class DbHelper extends SQLiteOpenHelper {
                         "avatar TEXT, " +
                         "header TEXT, " +
                         "created_at TEXT, " +
-                        "role TEXT DEFAULT 'customer'" +
+                        "role TEXT DEFAULT 'customer', " +
+                        "is_active INTEGER DEFAULT 1" +
                         ")"
         );
     }
@@ -146,6 +154,7 @@ public class DbHelper extends SQLiteOpenHelper {
                         "address_id INTEGER, " +
                         "address TEXT, " +
                         "status TEXT, " +
+                        "is_received INTEGER DEFAULT 0, " +
                         "order_date TEXT, " +
                         "estimated_arrival TEXT" +
                         ")"
@@ -192,8 +201,24 @@ public class DbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        dropAllTables(db);
-        onCreate(db);
+
+        if (oldVersion < 4) {
+            try {
+                db.execSQL(
+                        "ALTER TABLE orders ADD COLUMN is_received INTEGER DEFAULT 0"
+                );
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (oldVersion < 5) {
+            try {
+                db.execSQL(
+                        "ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1"
+                );
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     private void dropAllTables(SQLiteDatabase db) {
@@ -224,6 +249,7 @@ public class DbHelper extends SQLiteOpenHelper {
         values.put("header", "");
         values.put("created_at", now());
         values.put("role", "customer");
+        values.put("is_active", 1);
 
         long result = db.insert("users", null, values);
 
@@ -255,8 +281,10 @@ public class DbHelper extends SQLiteOpenHelper {
     public int loginUser(String email, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
 
+        ensureUserActiveColumnExists();
+
         Cursor cursor = db.rawQuery(
-                "SELECT id FROM users WHERE email = ? AND password = ?",
+                "SELECT id FROM users WHERE email = ? AND password = ? AND is_active = 1",
                 new String[]{email, password}
         );
 
@@ -329,8 +357,32 @@ public class DbHelper extends SQLiteOpenHelper {
         }
     }
 
+    public void ensureUserActiveColumnExists() {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        Cursor cursor = db.rawQuery("PRAGMA table_info(users)", null);
+
+        boolean activeExists = false;
+
+        while (cursor.moveToNext()) {
+            String columnName = cursor.getString(cursor.getColumnIndexOrThrow("name"));
+
+            if ("is_active".equals(columnName)) {
+                activeExists = true;
+                break;
+            }
+        }
+
+        cursor.close();
+
+        if (!activeExists) {
+            db.execSQL("ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1");
+        }
+    }
+
     public void createDefaultAdminIfNeeded() {
         ensureRoleColumnExists();
+        ensureUserActiveColumnExists();
 
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -356,11 +408,54 @@ public class DbHelper extends SQLiteOpenHelper {
         values.put("header", "");
         values.put("created_at", now());
         values.put("role", "admin");
+        values.put("is_active", 1);
 
         long result = db.insert("users", null, values);
 
         if (result != -1) {
             createDefaultSettings((int) result);
+        }
+    }
+
+    public Cursor getAllUsersForAdmin() {
+        ensureUserActiveColumnExists();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        return db.rawQuery(
+                "SELECT * FROM users WHERE LOWER(IFNULL(role, 'customer')) != 'admin' ORDER BY id DESC",
+                null
+        );
+    }
+
+    public boolean updateUserByAdmin(
+            int userId,
+            String name,
+            String username,
+            String email,
+            String phone,
+            boolean isActive
+    ) {
+        ensureUserActiveColumnExists();
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put("name", name);
+        values.put("username", username);
+        values.put("email", email);
+        values.put("phone", phone);
+        values.put("is_active", isActive ? 1 : 0);
+
+        try {
+            int result = db.update(
+                    "users",
+                    values,
+                    "id = ? AND LOWER(IFNULL(role, 'customer')) != 'admin'",
+                    new String[]{String.valueOf(userId)}
+            );
+
+            return result > 0;
+        } catch (SQLiteConstraintException e) {
+            return false;
         }
     }
 
@@ -909,6 +1004,28 @@ public class DbHelper extends SQLiteOpenHelper {
         return db.insert("orders", null, values);
     }
 
+    public int getOrderItemCount(long orderId) {
+
+        SQLiteDatabase db = getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT COUNT(*) FROM order_items WHERE order_id = ?",
+                new String[]{
+                        String.valueOf(orderId)
+                }
+        );
+
+        int count = 0;
+
+        if(cursor.moveToFirst()){
+            count = cursor.getInt(0);
+        }
+
+        cursor.close();
+
+        return count;
+    }
+
     public boolean insertOrderItem(
             long orderId,
             String productId,
@@ -1114,6 +1231,37 @@ public class DbHelper extends SQLiteOpenHelper {
         );
     }
 
+    public Cursor getAllOrders() {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        return db.rawQuery(
+                "SELECT o.*, " +
+                        "u.name AS customer_name, " +
+                        "u.username AS customer_username, " +
+                        "u.email AS customer_email " +
+                        "FROM orders o " +
+                        "LEFT JOIN users u ON o.user_id = u.id " +
+                        "ORDER BY o.id DESC",
+                null
+        );
+    }
+
+    public Cursor getOrderWithUser(long orderId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        return db.rawQuery(
+                "SELECT o.*, " +
+                        "u.name AS customer_name, " +
+                        "u.username AS customer_username, " +
+                        "u.email AS customer_email, " +
+                        "u.phone AS customer_phone " +
+                        "FROM orders o " +
+                        "LEFT JOIN users u ON o.user_id = u.id " +
+                        "WHERE o.id = ? LIMIT 1",
+                new String[]{String.valueOf(orderId)}
+        );
+    }
+
     public Cursor getOrdersByUserId(int userId) {
         return getOrdersByUser(userId);
     }
@@ -1151,21 +1299,34 @@ public class DbHelper extends SQLiteOpenHelper {
         );
     }
 
-    public Cursor getActiveOrders(int userId) {
-        SQLiteDatabase db = this.getReadableDatabase();
+    public Cursor getActiveOrders(int userId){
+
+        SQLiteDatabase db = getReadableDatabase();
 
         return db.rawQuery(
-                "SELECT * FROM orders WHERE user_id = ? AND LOWER(status) IN ('packing', 'shipping') ORDER BY id DESC",
-                new String[]{String.valueOf(userId)}
+                "SELECT * FROM orders " +
+                        "WHERE user_id=? " +
+                        "AND is_received=0 " +
+                        "AND LOWER(status) NOT IN ('cancelled', 'canceled') " +
+                        "ORDER BY id DESC",
+                new String[]{
+                        String.valueOf(userId)
+                }
         );
     }
 
-    public Cursor getPastOrders(int userId) {
-        SQLiteDatabase db = this.getReadableDatabase();
+    public Cursor getPastOrders(int userId){
+
+        SQLiteDatabase db = getReadableDatabase();
 
         return db.rawQuery(
-                "SELECT * FROM orders WHERE user_id = ? AND LOWER(status) = 'delivered' ORDER BY id DESC",
-                new String[]{String.valueOf(userId)}
+                "SELECT * FROM orders " +
+                        "WHERE user_id=? " +
+                        "AND (is_received=1 OR LOWER(status) IN ('cancelled', 'canceled')) " +
+                        "ORDER BY id DESC",
+                new String[]{
+                        String.valueOf(userId)
+                }
         );
     }
 
@@ -1196,6 +1357,12 @@ public class DbHelper extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put("status", status);
 
+        if (STATUS_CANCELLED.equals(status)) {
+            values.put("is_received", 1);
+        } else {
+            values.put("is_received", 0);
+        }
+
         int result = db.update(
                 "orders",
                 values,
@@ -1204,6 +1371,95 @@ public class DbHelper extends SQLiteOpenHelper {
         );
 
         return result > 0;
+    }
+
+    public boolean confirmOrderReceived(long orderId) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put("is_received", 1);
+
+        int result = db.update(
+                "orders",
+                values,
+                "id = ?",
+                new String[]{String.valueOf(orderId)}
+        );
+
+        return result > 0;
+    }
+
+    public boolean isOrderReceived(long orderId) {
+
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT is_received FROM orders WHERE id = ?",
+                new String[]{String.valueOf(orderId)}
+        );
+
+        boolean received = false;
+
+        if(cursor.moveToFirst()){
+            received =
+                    cursor.getInt(
+                            cursor.getColumnIndexOrThrow("is_received")
+                    ) == 1;
+        }
+
+        cursor.close();
+
+        return received;
+    }
+
+    public OrderItem getFirstOrderItem(long orderId){
+
+        SQLiteDatabase db = getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM order_items WHERE order_id=? LIMIT 1",
+                new String[]{String.valueOf(orderId)}
+        );
+
+        OrderItem item = null;
+
+        if(cursor.moveToFirst()){
+
+            item = new OrderItem();
+
+            item.setId(
+                    cursor.getInt(cursor.getColumnIndexOrThrow("id"))
+            );
+
+            item.setOrderId(
+                    cursor.getInt(cursor.getColumnIndexOrThrow("order_id"))
+            );
+
+            item.setProductId(
+                    cursor.getString(cursor.getColumnIndexOrThrow("product_id"))
+            );
+
+            item.setProductName(
+                    cursor.getString(cursor.getColumnIndexOrThrow("product_name"))
+            );
+
+            item.setProductImage(
+                    cursor.getString(cursor.getColumnIndexOrThrow("product_image"))
+            );
+
+            item.setPrice(
+                    cursor.getInt(cursor.getColumnIndexOrThrow("price"))
+            );
+
+            item.setQuantity(
+                    cursor.getInt(cursor.getColumnIndexOrThrow("quantity"))
+            );
+        }
+
+        cursor.close();
+
+        return item;
     }
 
     public void normalizeLegacyOrderStatuses(int userId) {
@@ -1236,6 +1492,17 @@ public class DbHelper extends SQLiteOpenHelper {
                 "orders",
                 deliveredValues,
                 "user_id = ? AND LOWER(status) IN ('delivery', 'complete', 'completed')",
+                new String[]{String.valueOf(userId)}
+        );
+
+        ContentValues cancelledValues = new ContentValues();
+        cancelledValues.put("status", STATUS_CANCELLED);
+        cancelledValues.put("is_received", 1);
+
+        db.update(
+                "orders",
+                cancelledValues,
+                "user_id = ? AND LOWER(status) IN ('cancel', 'canceled')",
                 new String[]{String.valueOf(userId)}
         );
     }

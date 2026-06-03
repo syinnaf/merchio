@@ -1,10 +1,12 @@
 package com.example.merchio;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -13,7 +15,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.merchio.adapters.CheckoutAdapter;
-import com.example.merchio.SessionManager;
 import com.example.merchio.db.DbHelper;
 import com.example.merchio.models.CartItem;
 import com.example.merchio.models.Product;
@@ -25,38 +26,42 @@ import java.util.Locale;
 
 public class CheckoutActivity extends AppCompatActivity {
 
-    RecyclerView rvCheckout;
+    private RecyclerView rvCheckout;
 
-    TextView txtAddress,
+    private TextView txtAddress,
             txtSubtotal,
             txtShipping,
             txtTax,
             txtTotal;
 
-    RadioButton rbExpress,
+    private RadioButton rbExpress,
             rbStandard,
-            rbCard,
-            rbWallet;
+            rbBank,
+            rbDana,
+            rbGopay,
+            rbShopeePay,
+            rbCod;
 
-    Button btnBuy;
+    private RadioGroup rgPaymentCheckout;
+
+    private Button btnBuy;
+
+    private DbHelper dbHelper;
+    private SessionManager sessionManager;
+
+    private final List<CartItem> checkoutItems = new ArrayList<>();
 
     private boolean isBuyNow = false;
 
-    DbHelper dbHelper;
-    SessionManager sessionManager;
+    private int userId = -1;
 
-    List<CartItem> checkoutItems =
-            new ArrayList<>();
+    private int subtotal = 0;
+    private int shippingCost = 15000;
+    private int tax = 0;
+    private int total = 0;
 
-    int userId = -1;
-
-    int subtotal = 0;
-    int shippingCost = 15000;
-    int tax = 0;
-    int total = 0;
-
-    int addressId = 0;
-    String fullAddress = "";
+    private int addressId = 0;
+    private String fullAddress = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,11 +69,7 @@ public class CheckoutActivity extends AppCompatActivity {
         setContentView(R.layout.activity_checkout);
 
         initViews();
-
-        dbHelper = new DbHelper(this);
-
-        sessionManager = new SessionManager(this);
-        userId = sessionManager.getUserId();
+        initHelpers();
 
         if (userId == -1) {
             Toast.makeText(
@@ -86,16 +87,13 @@ public class CheckoutActivity extends AppCompatActivity {
         );
 
         loadAddress();
+        loadDefaultPayment();
 
-        isBuyNow =
-                getIntent().getBooleanExtra(
-                        "buy_now",
-                        false
-                );
+        isBuyNow = getIntent().getBooleanExtra("buy_now", false);
 
-        if(isBuyNow){
+        if (isBuyNow) {
             loadBuyNowItem();
-        }else{
+        } else {
             loadCheckoutItems();
         }
 
@@ -105,11 +103,9 @@ public class CheckoutActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-
         rvCheckout = findViewById(R.id.rvCheckout);
 
         txtAddress = findViewById(R.id.txtAddress);
-
         txtSubtotal = findViewById(R.id.txtSubtotal);
         txtShipping = findViewById(R.id.txtShipping);
         txtTax = findViewById(R.id.txtTax);
@@ -118,113 +114,105 @@ public class CheckoutActivity extends AppCompatActivity {
         rbExpress = findViewById(R.id.rbExpress);
         rbStandard = findViewById(R.id.rbStandard);
 
-        rbCard = findViewById(R.id.rbCard);
-        rbWallet = findViewById(R.id.rbWallet);
+        rgPaymentCheckout = findViewById(R.id.rgPaymentCheckout);
+        rbBank = findViewById(R.id.rbBank);
+        rbDana = findViewById(R.id.rbDana);
+        rbGopay = findViewById(R.id.rbGopay);
+        rbShopeePay = findViewById(R.id.rbShopeePay);
+        rbCod = findViewById(R.id.rbCod);
 
         btnBuy = findViewById(R.id.btnBuy);
 
         rbExpress.setChecked(true);
-        rbCard.setChecked(true);
+    }
+
+    private void initHelpers() {
+        dbHelper = new DbHelper(this);
+        sessionManager = new SessionManager(this);
+        userId = sessionManager.getUserId();
+    }
+
+    private void loadDefaultPayment() {
+        SharedPreferences prefs = getSharedPreferences(
+                PaymentMethodActivity.PREF_PAYMENT,
+                MODE_PRIVATE
+        );
+
+        String defaultPayment = prefs.getString(
+                PaymentMethodActivity.KEY_DEFAULT_PAYMENT,
+                PaymentMethodActivity.PAYMENT_COD
+        );
+
+        if (PaymentMethodActivity.PAYMENT_BANK.equals(defaultPayment)) {
+            rbBank.setChecked(true);
+        } else if (PaymentMethodActivity.PAYMENT_DANA.equals(defaultPayment)) {
+            rbDana.setChecked(true);
+        } else if (PaymentMethodActivity.PAYMENT_GOPAY.equals(defaultPayment)) {
+            rbGopay.setChecked(true);
+        } else if (PaymentMethodActivity.PAYMENT_SHOPEEPAY.equals(defaultPayment)) {
+            rbShopeePay.setChecked(true);
+        } else {
+            rbCod.setChecked(true);
+        }
+    }
+
+    private String getSelectedPaymentMethod() {
+        int checkedId = rgPaymentCheckout.getCheckedRadioButtonId();
+
+        if (checkedId == R.id.rbBank) {
+            return PaymentMethodActivity.PAYMENT_BANK;
+        } else if (checkedId == R.id.rbDana) {
+            return PaymentMethodActivity.PAYMENT_DANA;
+        } else if (checkedId == R.id.rbGopay) {
+            return PaymentMethodActivity.PAYMENT_GOPAY;
+        } else if (checkedId == R.id.rbShopeePay) {
+            return PaymentMethodActivity.PAYMENT_SHOPEEPAY;
+        } else {
+            return PaymentMethodActivity.PAYMENT_COD;
+        }
     }
 
     private void loadBuyNowItem() {
+        Product product = getIntent().getParcelableExtra("product");
+        int qty = getIntent().getIntExtra("qty", 1);
+        String type = getIntent().getStringExtra("type");
 
-        Product product =
-                getIntent().getParcelableExtra(
-                        "product"
-                );
-
-        int qty =
-                getIntent().getIntExtra(
-                        "qty",
-                        1
-                );
-
-        String type =
-                getIntent().getStringExtra(
-                        "type"
-                );
-
-        if(product == null){
+        if (product == null) {
+            Toast.makeText(this, "Produk tidak valid", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
         CartItem item = new CartItem();
-
-        item.setProductId(
-                String.valueOf(product.getId())
-        );
-
-        item.setProductName(
-                product.getName()
-        );
-
-        item.setProductImage(
-                product.getImageUrl()
-        );
-
-        item.setProductPrice(
-                product.getPrice()
-        );
-
+        item.setProductId(String.valueOf(product.getId()));
+        item.setProductName(product.getName());
+        item.setProductImage(product.getImageUrl());
+        item.setProductPrice(product.getPrice());
         item.setQuantity(qty);
-
         item.setType(type);
 
+        checkoutItems.clear();
         checkoutItems.add(item);
 
-        subtotal =
-                product.getPrice()
-                        * qty;
+        subtotal = product.getPrice() * qty;
 
-        CheckoutAdapter adapter =
-                new CheckoutAdapter(
-                        this,
-                        checkoutItems
-                );
-
+        CheckoutAdapter adapter = new CheckoutAdapter(this, checkoutItems);
         rvCheckout.setAdapter(adapter);
 
         calculateTotal();
     }
 
     private void loadAddress() {
-
-        Cursor cursor =
-                dbHelper.getDefaultAddress(userId);
+        Cursor cursor = dbHelper.getDefaultAddress(userId);
 
         if (cursor != null && cursor.moveToFirst()) {
+            addressId = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
 
-            addressId =
-                    cursor.getInt(
-                            cursor.getColumnIndexOrThrow("id")
-                    );
-
-            String recipient =
-                    cursor.getString(
-                            cursor.getColumnIndexOrThrow("recipient_name")
-                    );
-
-            String phone =
-                    cursor.getString(
-                            cursor.getColumnIndexOrThrow("phone")
-                    );
-
-            String address =
-                    cursor.getString(
-                            cursor.getColumnIndexOrThrow("address")
-                    );
-
-            String city =
-                    cursor.getString(
-                            cursor.getColumnIndexOrThrow("city")
-                    );
-
-            String postal =
-                    cursor.getString(
-                            cursor.getColumnIndexOrThrow("postal_code")
-                    );
+            String recipient = cursor.getString(cursor.getColumnIndexOrThrow("recipient_name"));
+            String phone = cursor.getString(cursor.getColumnIndexOrThrow("phone"));
+            String address = cursor.getString(cursor.getColumnIndexOrThrow("address"));
+            String city = cursor.getString(cursor.getColumnIndexOrThrow("city"));
+            String postal = cursor.getString(cursor.getColumnIndexOrThrow("postal_code"));
 
             fullAddress =
                     recipient + "\n"
@@ -236,10 +224,8 @@ public class CheckoutActivity extends AppCompatActivity {
             txtAddress.setText(fullAddress);
 
         } else {
-
-            txtAddress.setText(
-                    "Belum ada alamat.\nSilakan tambahkan alamat terlebih dahulu."
-            );
+            fullAddress = "Alamat demo Merchio\nJakarta, Indonesia";
+            txtAddress.setText(fullAddress);
         }
 
         if (cursor != null) {
@@ -248,91 +234,45 @@ public class CheckoutActivity extends AppCompatActivity {
     }
 
     private void loadCheckoutItems() {
+        checkoutItems.clear();
+        subtotal = 0;
 
-        Cursor cursor =
-                dbHelper.getCheckedCartByUser(userId);
+        Cursor cursor = dbHelper.getCheckedCartByUser(userId);
 
-        while(cursor.moveToNext()) {
-
+        while (cursor.moveToNext()) {
             CartItem item = new CartItem();
 
-            item.setId(
-                    cursor.getInt(
-                            cursor.getColumnIndexOrThrow("id")
-                    )
-            );
-
-            item.setProductId(
-                    cursor.getString(
-                            cursor.getColumnIndexOrThrow("product_id")
-                    )
-            );
-
-            item.setProductName(
-                    cursor.getString(
-                            cursor.getColumnIndexOrThrow("product_name")
-                    )
-            );
-
-            item.setProductImage(
-                    cursor.getString(
-                            cursor.getColumnIndexOrThrow("product_image")
-                    )
-            );
-
-            item.setProductPrice(
-                    cursor.getInt(
-                            cursor.getColumnIndexOrThrow("product_price")
-                    )
-            );
-
-            item.setQuantity(
-                    cursor.getInt(
-                            cursor.getColumnIndexOrThrow("quantity")
-                    )
-            );
-
-            item.setType(
-                    cursor.getString(
-                            cursor.getColumnIndexOrThrow("type")
-                    )
-            );
+            item.setId(cursor.getInt(cursor.getColumnIndexOrThrow("id")));
+            item.setProductId(cursor.getString(cursor.getColumnIndexOrThrow("product_id")));
+            item.setProductName(cursor.getString(cursor.getColumnIndexOrThrow("product_name")));
+            item.setProductImage(cursor.getString(cursor.getColumnIndexOrThrow("product_image")));
+            item.setProductPrice(cursor.getInt(cursor.getColumnIndexOrThrow("product_price")));
+            item.setQuantity(cursor.getInt(cursor.getColumnIndexOrThrow("quantity")));
+            item.setType(cursor.getString(cursor.getColumnIndexOrThrow("type")));
 
             checkoutItems.add(item);
 
-            subtotal +=
-                    item.getProductPrice()
-                            * item.getQuantity();
+            subtotal += item.getProductPrice() * item.getQuantity();
         }
 
         cursor.close();
 
-        CheckoutAdapter adapter =
-                new CheckoutAdapter(
-                        this,
-                        checkoutItems
-                );
-
+        CheckoutAdapter adapter = new CheckoutAdapter(this, checkoutItems);
         rvCheckout.setAdapter(adapter);
 
         calculateTotal();
     }
 
     private void setupShipping() {
-
         rbExpress.setOnCheckedChangeListener((buttonView, isChecked) -> {
-
-            if(isChecked) {
-
+            if (isChecked) {
                 shippingCost = 15000;
                 calculateTotal();
             }
         });
 
         rbStandard.setOnCheckedChangeListener((buttonView, isChecked) -> {
-
-            if(isChecked) {
-
+            if (isChecked) {
                 shippingCost = 10000;
                 calculateTotal();
             }
@@ -340,13 +280,8 @@ public class CheckoutActivity extends AppCompatActivity {
     }
 
     private void calculateTotal() {
-
-        tax = (int)(subtotal * 0.1);
-
-        total =
-                subtotal
-                        + shippingCost
-                        + tax;
+        tax = (int) (subtotal * 0.1);
+        total = subtotal + shippingCost + tax;
 
         txtSubtotal.setText(rupiah(subtotal));
         txtShipping.setText(rupiah(shippingCost));
@@ -355,25 +290,20 @@ public class CheckoutActivity extends AppCompatActivity {
     }
 
     private void processOrder() {
-
         if (checkoutItems.isEmpty()) {
-
             Toast.makeText(
                     this,
                     "Cart kosong",
                     Toast.LENGTH_SHORT
             ).show();
-
             return;
         }
 
-        if (addressId == 0) {
-            addressId = 0;
+        if (fullAddress == null || fullAddress.trim().isEmpty()) {
             fullAddress = "Alamat demo Merchio\nJakarta, Indonesia";
         }
 
-        String paymentMethod =
-                rbCard.isChecked() ? "Credit Card" : "Digital Wallet";
+        String paymentMethod = getSelectedPaymentMethod();
 
         String shippingMethod =
                 rbExpress.isChecked() ? "Express" : "Standard";
@@ -383,65 +313,58 @@ public class CheckoutActivity extends AppCompatActivity {
 
         long orderId;
 
-        if(isBuyNow){
+        if (isBuyNow) {
+            CartItem item = checkoutItems.get(0);
 
-            CartItem item =
-                    checkoutItems.get(0);
+            orderId = dbHelper.createBuyNowOrder(
+                    userId,
+                    item,
+                    paymentMethod,
+                    shippingMethod,
+                    addressId,
+                    fullAddress,
+                    shippingCost,
+                    tax,
+                    estimatedArrival
+            );
 
-            orderId =
-                    dbHelper.createBuyNowOrder(
-                            userId,
-                            item,
-                            paymentMethod,
-                            shippingMethod,
-                            addressId,
-                            fullAddress,
-                            shippingCost,
-                            tax,
-                            estimatedArrival
-                    );
-
-        }else{
-
-            orderId =
-                    dbHelper.checkoutFromCart(
-                            userId,
-                            paymentMethod,
-                            shippingMethod,
-                            addressId,
-                            fullAddress,
-                            shippingCost,
-                            tax,
-                            estimatedArrival
-                    );
+        } else {
+            orderId = dbHelper.checkoutFromCart(
+                    userId,
+                    paymentMethod,
+                    shippingMethod,
+                    addressId,
+                    fullAddress,
+                    shippingCost,
+                    tax,
+                    estimatedArrival
+            );
         }
 
         if (orderId != -1) {
-
-            // Pindah ke OrderSuccessActivity, kirim orderId
             Intent intent = new Intent(this, OrderSuccessActivity.class);
             intent.putExtra("order_id", orderId);
-
-            // Clear back stack — user tidak bisa back ke Checkout setelah sukses
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
             startActivity(intent);
             finish();
 
         } else {
-
-            Toast.makeText(this, "Order gagal, coba lagi", Toast.LENGTH_SHORT).show();
+            Toast.makeText(
+                    this,
+                    "Order gagal, coba lagi",
+                    Toast.LENGTH_SHORT
+            ).show();
         }
     }
 
     private String rupiah(int amount) {
-
         NumberFormat format =
                 NumberFormat.getCurrencyInstance(
-                        new Locale("id","ID")
+                        new Locale("id", "ID")
                 );
 
         return format.format(amount)
-                .replace(",00","");
+                .replace(",00", "");
     }
 }

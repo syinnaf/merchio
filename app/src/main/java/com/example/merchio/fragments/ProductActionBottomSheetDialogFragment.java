@@ -20,6 +20,7 @@ import com.example.merchio.SessionManager;
 import com.example.merchio.db.DbHelper;
 import com.example.merchio.models.Product;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+import com.example.merchio.SessionManager;
 
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -172,8 +173,16 @@ public class ProductActionBottomSheetDialogFragment
                 SessionManager sessionManager =
                         new SessionManager(requireContext());
 
-                int userId =
-                        sessionManager.getUserId();
+                int userId = sessionManager.getUserId();
+
+                if (userId == -1) {
+                    Toast.makeText(
+                            requireContext(),
+                            "Silakan login dulu",
+                            Toast.LENGTH_SHORT
+                    ).show();
+                    return;
+                }
 
                 boolean success = dbHelper.addToCart(
                         userId,
