@@ -16,7 +16,6 @@ public class Product implements Parcelable {
     private int sold_count;
     private String description;
     private String image_url;
-    private int is_paidpromote;
 
     public Product() {
     }
@@ -31,8 +30,7 @@ public class Product implements Parcelable {
                    int stock,
                    int sold_count,
                    String description,
-                   String image_url,
-                   int is_paidpromote) {
+                   String image_url) {
 
         this.id = id;
         this.name = name;
@@ -45,7 +43,6 @@ public class Product implements Parcelable {
         this.sold_count = sold_count;
         this.description = description;
         this.image_url = image_url;
-        this.is_paidpromote = is_paidpromote;
     }
 
     protected Product(Parcel in) {
@@ -61,7 +58,6 @@ public class Product implements Parcelable {
         sold_count = in.readInt();
         description = in.readString();
         image_url = in.readString();
-        is_paidpromote = in.readInt();
     }
 
     public static final Creator<Product> CREATOR =
@@ -256,22 +252,6 @@ public class Product implements Parcelable {
         this.image_url = productImage;
     }
 
-    public int getIs_paidpromote() {
-        return is_paidpromote;
-    }
-
-    public int getIsPaidPromote() {
-        return is_paidpromote;
-    }
-
-    public void setIs_paidpromote(int is_paidpromote) {
-        this.is_paidpromote = is_paidpromote;
-    }
-
-    public void setIsPaidPromote(int isPaidPromote) {
-        this.is_paidpromote = isPaidPromote;
-    }
-
     @Override
     public void writeToParcel(Parcel dest,
                               int flags) {
@@ -287,7 +267,6 @@ public class Product implements Parcelable {
         dest.writeInt(sold_count);
         dest.writeString(description);
         dest.writeString(image_url);
-        dest.writeInt(is_paidpromote);
     }
 
     @Override

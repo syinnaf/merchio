@@ -7,6 +7,7 @@ public class Banner {
     private String subtitle;
     private String image_url;
     private String product_id;
+    private String type;
 
     public Banner() {
     }
@@ -102,5 +103,9 @@ public class Banner {
 
     public void setProductId(String productId) {
         this.product_id = productId;
+    }
+
+    public String getType() {
+        return type;
     }
 }

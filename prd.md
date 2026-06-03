@@ -81,8 +81,7 @@ Field:
   "stock": 0,
   "sold_count": 0,
   "description": "",
-  "image_url": "",
-  "is_paidpromote": false
+  "image_url": ""
 }
 ```
 
