@@ -56,6 +56,18 @@ public class ProfileFragment extends Fragment {
         return view;
     }
 
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        if (dbHelper != null && sessionManager != null) {
+            userId = sessionManager.getUserId();
+            loadUserProfile();
+            loadOrderSummary();
+        }
+    }
+
     private void initViews(View view) {
         imgHeader = view.findViewById(R.id.img_header);
         imgAvatar = view.findViewById(R.id.img_avatar);

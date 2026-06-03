@@ -11,8 +11,14 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class PaymentMethodActivity extends AppCompatActivity {
 
-    private static final String PREF_PAYMENT = "payment_pref";
-    private static final String KEY_DEFAULT_PAYMENT = "default_payment";
+    public static final String PREF_PAYMENT = "payment_pref";
+    public static final String KEY_DEFAULT_PAYMENT = "default_payment";
+
+    public static final String PAYMENT_BANK = "Bank Transfer";
+    public static final String PAYMENT_DANA = "DANA";
+    public static final String PAYMENT_GOPAY = "GoPay";
+    public static final String PAYMENT_SHOPEEPAY = "ShopeePay";
+    public static final String PAYMENT_COD = "COD";
 
     private TextView btnBack;
     private RadioGroup rgPayment;
@@ -23,12 +29,18 @@ public class PaymentMethodActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_payment_method);
 
+        initViews();
+        loadSavedPayment();
+        setupClicks();
+    }
+
+    private void initViews() {
         btnBack = findViewById(R.id.btn_back);
         rgPayment = findViewById(R.id.rg_payment);
         btnSavePayment = findViewById(R.id.btn_save_payment);
+    }
 
-        loadSavedPayment();
-
+    private void setupClicks() {
         btnBack.setOnClickListener(v -> finish());
 
         btnSavePayment.setOnClickListener(v -> saveDefaultPayment());
@@ -36,15 +48,15 @@ public class PaymentMethodActivity extends AppCompatActivity {
 
     private void loadSavedPayment() {
         SharedPreferences prefs = getSharedPreferences(PREF_PAYMENT, MODE_PRIVATE);
-        String payment = prefs.getString(KEY_DEFAULT_PAYMENT, "COD");
+        String payment = prefs.getString(KEY_DEFAULT_PAYMENT, PAYMENT_COD);
 
-        if (payment.equals("Bank Transfer")) {
+        if (PAYMENT_BANK.equals(payment)) {
             rgPayment.check(R.id.rb_bank);
-        } else if (payment.equals("DANA")) {
+        } else if (PAYMENT_DANA.equals(payment)) {
             rgPayment.check(R.id.rb_dana);
-        } else if (payment.equals("GoPay")) {
+        } else if (PAYMENT_GOPAY.equals(payment)) {
             rgPayment.check(R.id.rb_gopay);
-        } else if (payment.equals("ShopeePay")) {
+        } else if (PAYMENT_SHOPEEPAY.equals(payment)) {
             rgPayment.check(R.id.rb_shopeepay);
         } else {
             rgPayment.check(R.id.rb_cod);
@@ -52,21 +64,7 @@ public class PaymentMethodActivity extends AppCompatActivity {
     }
 
     private void saveDefaultPayment() {
-        int checkedId = rgPayment.getCheckedRadioButtonId();
-
-        String selectedPayment;
-
-        if (checkedId == R.id.rb_bank) {
-            selectedPayment = "Bank Transfer";
-        } else if (checkedId == R.id.rb_dana) {
-            selectedPayment = "DANA";
-        } else if (checkedId == R.id.rb_gopay) {
-            selectedPayment = "GoPay";
-        } else if (checkedId == R.id.rb_shopeepay) {
-            selectedPayment = "ShopeePay";
-        } else {
-            selectedPayment = "COD";
-        }
+        String selectedPayment = getSelectedPayment();
 
         SharedPreferences prefs = getSharedPreferences(PREF_PAYMENT, MODE_PRIVATE);
         prefs.edit()
@@ -80,5 +78,21 @@ public class PaymentMethodActivity extends AppCompatActivity {
         ).show();
 
         finish();
+    }
+
+    private String getSelectedPayment() {
+        int checkedId = rgPayment.getCheckedRadioButtonId();
+
+        if (checkedId == R.id.rb_bank) {
+            return PAYMENT_BANK;
+        } else if (checkedId == R.id.rb_dana) {
+            return PAYMENT_DANA;
+        } else if (checkedId == R.id.rb_gopay) {
+            return PAYMENT_GOPAY;
+        } else if (checkedId == R.id.rb_shopeepay) {
+            return PAYMENT_SHOPEEPAY;
+        } else {
+            return PAYMENT_COD;
+        }
     }
 }

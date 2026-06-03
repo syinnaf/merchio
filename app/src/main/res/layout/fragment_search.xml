@@ -42,6 +42,7 @@
         </LinearLayout>
     </LinearLayout>
 
+    //
     <LinearLayout
         android:id="@+id/layout_recent_searches"
         android:layout_width="match_parent"

@@ -128,27 +128,59 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Payment Method"
-                android:textColor="#000000"
+                android:textColor="@color/merchio_text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
             <RadioGroup
+                android:id="@+id/rgPaymentCheckout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp">
 
                 <RadioButton
-                    android:id="@+id/rbCard"
+                    android:id="@+id/rbBank"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Credit Card" />
+                    android:buttonTint="@color/merchio_primary"
+                    android:text="Bank Transfer"
+                    android:textColor="@color/merchio_text_primary" />
 
                 <RadioButton
-                    android:id="@+id/rbWallet"
+                    android:id="@+id/rbDana"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Digital Wallet" />
+                    android:buttonTint="@color/merchio_primary"
+                    android:text="DANA"
+                    android:textColor="@color/merchio_text_primary" />
+
+                <RadioButton
+                    android:id="@+id/rbGopay"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:buttonTint="@color/merchio_primary"
+                    android:text="GoPay"
+                    android:textColor="@color/merchio_text_primary" />
+
+                <RadioButton
+                    android:id="@+id/rbShopeePay"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:buttonTint="@color/merchio_primary"
+                    android:text="ShopeePay"
+                    android:textColor="@color/merchio_text_primary" />
+
+                <RadioButton
+                    android:id="@+id/rbCod"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:buttonTint="@color/merchio_primary"
+                    android:text="COD"
+                    android:textColor="@color/merchio_text_primary" />
             </RadioGroup>
         </LinearLayout>
 

@@ -12,7 +12,8 @@ import com.example.merchio.db.DbHelper;
 public class AdminDashboardActivity extends AppCompatActivity {
 
     private TextView tvTotalUsers, tvTotalOrders, tvPacking, tvShipping, tvDelivered;
-    private TextView menuManageProducts, menuManageOrders, menuManageUsers, menuLogout;
+    private TextView tvCancelled, tvCancelledSummary;
+    private TextView menuManageOrders, menuManageUsers, menuLogout;
 
     private DbHelper dbHelper;
     private SessionManager sessionManager;
@@ -25,9 +26,21 @@ public class AdminDashboardActivity extends AppCompatActivity {
         dbHelper = new DbHelper(this);
         sessionManager = new SessionManager(this);
 
+        dbHelper.ensureRoleColumnExists();
+        dbHelper.ensureUserActiveColumnExists();
+        dbHelper.createDefaultAdminIfNeeded();
+
         initViews();
         loadDashboardData();
         setupClicks();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (dbHelper != null) {
+            loadDashboardData();
+        }
     }
 
     private void initViews() {
@@ -36,19 +49,46 @@ public class AdminDashboardActivity extends AppCompatActivity {
         tvPacking = findViewById(R.id.tv_packing);
         tvShipping = findViewById(R.id.tv_shipping);
         tvDelivered = findViewById(R.id.tv_delivered);
+        tvCancelled = findViewById(R.id.tv_cancelled);
+        tvCancelledSummary = findViewById(R.id.tv_cancelled_summary);
 
-        menuManageProducts = findViewById(R.id.menu_manage_products);
         menuManageOrders = findViewById(R.id.menu_manage_orders);
         menuManageUsers = findViewById(R.id.menu_manage_users);
         menuLogout = findViewById(R.id.menu_logout);
     }
 
     private void loadDashboardData() {
-        tvTotalUsers.setText(String.valueOf(countTable("users")));
-        tvTotalOrders.setText(String.valueOf(countTable("orders")));
-        tvPacking.setText(String.valueOf(countOrdersByStatus("packing")));
-        tvShipping.setText(String.valueOf(countOrdersByStatus("shipping")));
-        tvDelivered.setText(String.valueOf(countOrdersByStatus("delivered")));
+        int users = countCustomers();
+        int orders = countTable("orders");
+        int packing = countOrdersByStatus(DbHelper.STATUS_PACKING);
+        int shipping = countOrdersByStatus(DbHelper.STATUS_SHIPPING);
+        int delivered = countOrdersByStatus(DbHelper.STATUS_DELIVERED);
+        int cancelled = countOrdersByStatus(DbHelper.STATUS_CANCELLED);
+
+        tvTotalUsers.setText(String.valueOf(users));
+        tvTotalOrders.setText(String.valueOf(orders));
+        tvCancelled.setText(String.valueOf(cancelled));
+        tvPacking.setText(packing + "\nPacking");
+        tvShipping.setText(shipping + "\nShipping");
+        tvDelivered.setText(delivered + "\nDelivered");
+        tvCancelledSummary.setText(cancelled + "\nCancelled");
+    }
+
+    private int countCustomers() {
+        dbHelper.ensureRoleColumnExists();
+        Cursor cursor = dbHelper.getReadableDatabase().rawQuery(
+                "SELECT COUNT(*) AS total FROM users WHERE LOWER(IFNULL(role, 'customer')) != 'admin'",
+                null
+        );
+
+        int total = 0;
+
+        if (cursor.moveToFirst()) {
+            total = cursor.getInt(cursor.getColumnIndexOrThrow("total"));
+        }
+
+        cursor.close();
+        return total;
     }
 
     private int countTable(String tableName) {
@@ -84,17 +124,15 @@ public class AdminDashboardActivity extends AppCompatActivity {
     }
 
     private void setupClicks() {
-        menuManageProducts.setOnClickListener(v ->
-                android.widget.Toast.makeText(this, "Manage Products dummy untuk demo", android.widget.Toast.LENGTH_SHORT).show()
-        );
+        menuManageOrders.setOnClickListener(v -> {
+            Intent intent = new Intent(AdminDashboardActivity.this, ManageOrdersActivity.class);
+            startActivity(intent);
+        });
 
-        menuManageOrders.setOnClickListener(v ->
-                android.widget.Toast.makeText(this, "Manage Orders dummy untuk demo", android.widget.Toast.LENGTH_SHORT).show()
-        );
-
-        menuManageUsers.setOnClickListener(v ->
-                android.widget.Toast.makeText(this, "Manage Users dummy untuk demo", android.widget.Toast.LENGTH_SHORT).show()
-        );
+        menuManageUsers.setOnClickListener(v -> {
+            Intent intent = new Intent(AdminDashboardActivity.this, ManageUsersActivity.class);
+            startActivity(intent);
+        });
 
         menuLogout.setOnClickListener(v -> {
             sessionManager.logout();

@@ -34,6 +34,9 @@ import com.example.merchio.receivers.NetworkReceiver;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -54,6 +57,7 @@ public class HomeFragment extends Fragment
     private NetworkReceiver networkReceiver;
 
     private int userId = -1;
+    private List<Product> productList = new ArrayList<>();
 
     private final Handler bannerHandler = new Handler(Looper.getMainLooper());
     private int bannerSize = 0;
@@ -93,7 +97,6 @@ public class HomeFragment extends Fragment
         setupNetworkReceiver();
         fetchProducts();
         fetchCategories();
-        fetchBanners();
 
         return view;
     }
@@ -200,13 +203,29 @@ public class HomeFragment extends Fragment
                 }
 
                 if (response.isSuccessful() && response.body() != null) {
+
+                    productList.clear();
+                    productList.addAll(response.body());
+
+                    Collections.sort(productList, (p1, p2) ->
+                            Integer.compare(p2.getSoldCount(), p1.getSoldCount())
+                    );
+
+                    List<Product> popularProducts = new ArrayList<>();
+
+                    for (int i = 0; i < Math.min(10, productList.size()); i++) {
+                        popularProducts.add(productList.get(i));
+                    }
+
                     ProductAdapter adapter = new ProductAdapter(
                             requireContext(),
-                            response.body(),
+                            popularProducts,
                             HomeFragment.this
                     );
 
                     rvPopular.setAdapter(adapter);
+
+                    fetchBanners();
 
                 } else {
                     showToast("Gagal memuat produk");
@@ -282,11 +301,34 @@ public class HomeFragment extends Fragment
                 if (response.isSuccessful() && response.body() != null) {
                     List<Banner> bannerList = response.body();
 
-                    BannerAdapter adapter = new BannerAdapter(
-                            requireContext(),
-                            bannerList,
-                            HomeFragment.this
-                    );
+                    for (Banner banner : bannerList) {
+
+                        if ("best_seller".equals(banner.getType())) {
+
+                            Product bestSeller = getBestSellerProduct();
+
+                            if (bestSeller != null) {
+                                banner.setImageUrl(bestSeller.getImageUrl());
+                                banner.setSubtitle(bestSeller.getName());
+                            }
+
+                        } else if ("limited".equals(banner.getType())) {
+
+                            Product limited = getLimitedProduct();
+
+                            if (limited != null) {
+                                banner.setImageUrl(limited.getImageUrl());
+                                banner.setSubtitle(limited.getName());
+                            }
+                        }
+                    }
+
+                    BannerAdapter adapter =
+                            new BannerAdapter(
+                                    requireContext(),
+                                    bannerList,
+                                    HomeFragment.this
+                            );
 
                     bannerViewPager.setAdapter(adapter);
 
@@ -396,8 +438,53 @@ public class HomeFragment extends Fragment
 
     @Override
     public void onBannerClick(Banner banner) {
-        if (banner != null) {
-            showToast("Banner: " + banner.getTitle());
+
+        if (banner == null || productList.isEmpty()) {
+            return;
+        }
+
+        Product targetProduct = null;
+
+        String type = banner.getType();
+
+        if ("best_seller".equals(type)) {
+
+            targetProduct = productList.get(0);
+
+            for (Product product : productList) {
+
+                if (product.getSoldCount() >
+                        targetProduct.getSoldCount()) {
+
+                    targetProduct = product;
+                }
+            }
+
+        } else if ("limited".equals(type)) {
+
+            targetProduct = productList.get(0);
+
+            for (Product product : productList) {
+
+                if (product.getStock() <
+                        targetProduct.getStock()) {
+
+                    targetProduct = product;
+                }
+            }
+
+        }
+
+        if (targetProduct != null) {
+
+            Intent intent = new Intent(
+                    requireContext(),
+                    DetailProductActivity.class
+            );
+
+            intent.putExtra("product", targetProduct);
+
+            startActivity(intent);
         }
     }
 
@@ -428,5 +515,45 @@ public class HomeFragment extends Fragment
         if (isAdded()) {
             Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private Product getBestSellerProduct() {
+
+        if (productList == null || productList.isEmpty()) {
+            return null;
+        }
+
+        Product bestSeller = productList.get(0);
+
+        for (Product product : productList) {
+
+            if (product.getSoldCount() >
+                    bestSeller.getSoldCount()) {
+
+                bestSeller = product;
+            }
+        }
+
+        return bestSeller;
+    }
+
+    private Product getLimitedProduct() {
+
+        if (productList == null || productList.isEmpty()) {
+            return null;
+        }
+
+        Product limited = productList.get(0);
+
+        for (Product product : productList) {
+
+            if (product.getStock() <
+                    limited.getStock()) {
+
+                limited = product;
+            }
+        }
+
+        return limited;
     }
 }
