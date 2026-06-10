@@ -24,6 +24,10 @@ public class MainActivity extends AppCompatActivity {
     SQLiteDatabase database;
     BottomNavigationView bottomNav;
 
+    // Flag untuk mencegah bottom nav listener menimpa fragment yang sudah
+    // di-set dari luar (misal: navigateToSearchWithFilters dari HomeFragment)
+    private boolean suppressNavListener = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,6 +45,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupBottomNav() {
         bottomNav.setOnItemSelectedListener(item -> {
+            // Jika flag aktif, fragment sudah di-set dari luar — skip replace
+            if (suppressNavListener) {
+                suppressNavListener = false;
+                return true;
+            }
+
             int itemId = item.getItemId();
 
             if (itemId == R.id.nav_home) {
@@ -54,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
             } else if (itemId == R.id.nav_cart) {
                 openFragment(new CartFragment());
                 return true;
+
             } else if (itemId == R.id.nav_profile) {
                 openFragment(new ProfileFragment());
                 return true;
@@ -61,6 +72,21 @@ public class MainActivity extends AppCompatActivity {
 
             return false;
         });
+    }
+
+    /**
+     * Navigasi ke fragment tertentu dan update tab bottom nav
+     * TANPA memicu listener (sehingga fragment berfilter tidak ditimpa).
+     * Dipanggil dari HomeFragment saat navigate dengan filter.
+     */
+    public void navigateWithFragment(Fragment fragment, int navItemId) {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.frameLayout, fragment)
+                .commit();
+
+        suppressNavListener = true;
+        bottomNav.setSelectedItemId(navItemId);
     }
 
     private void openFragment(Fragment fragment) {
