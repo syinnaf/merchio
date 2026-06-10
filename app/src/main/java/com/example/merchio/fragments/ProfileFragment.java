@@ -20,7 +20,7 @@ import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.example.merchio.CustomerServiceActivity;
-import com.example.merchio.PaymentMethodActivity;
+import com.example.merchio.DeliveryAddressActivity;
 import com.example.merchio.PurchaseHistoryActivity;
 import com.example.merchio.R;
 import com.example.merchio.SessionManager;
@@ -32,7 +32,7 @@ public class ProfileFragment extends Fragment {
     private ImageView imgHeader, imgAvatar;
     private TextView tvName, tvUsername;
     private TextView tvPackingCount, tvShippingCount, tvDeliveredCount;
-    private TextView menuPurchaseHistory, menuPaymentMethod, menuSetting, menuCustomerService;
+    private TextView menuPurchaseHistory, menuDeliveryAddress, menuSetting, menuCustomerService;
 
     private DbHelper dbHelper;
     private SessionManager sessionManager;
@@ -71,6 +71,7 @@ public class ProfileFragment extends Fragment {
 
         return view;
     }
+
 
     @Override
     public void onResume() {
@@ -139,7 +140,7 @@ public class ProfileFragment extends Fragment {
         tvDeliveredCount = view.findViewById(R.id.tv_delivered_count);
 
         menuPurchaseHistory = view.findViewById(R.id.menu_purchase_history);
-        menuPaymentMethod = view.findViewById(R.id.menu_payment_method);
+        menuDeliveryAddress = view.findViewById(R.id.menu_delivery_address);
         menuSetting = view.findViewById(R.id.menu_setting);
         menuCustomerService = view.findViewById(R.id.menu_customer_service);
     }
@@ -199,6 +200,21 @@ public class ProfileFragment extends Fragment {
         setOrderSummary(packing, shipping, delivered);
     }
 
+//    private void loadOrderSummary() {
+//        if (userId == -1) {
+//            setOrderSummary(0, 0, 0);
+//            return;
+//        }
+//
+//        int packing = dbHelper.getOrderCountByStatus(userId, "packing");
+//        int shipping = dbHelper.getOrderCountByStatus(userId, "shipping")
+//                + dbHelper.getOrderCountByStatus(userId, "shipped")
+//                + dbHelper.getOrderCountByStatus(userId, "in_transit");
+//        int delivered = dbHelper.getOrderCountByStatus(userId, "delivered");
+//
+//        setOrderSummary(packing, shipping, delivered);
+//    }
+
     private void setOrderSummary(int packing, int shipping, int delivered) {
         tvPackingCount.setText(packing + "\nPacking");
         tvShippingCount.setText(shipping + "\nShipping");
@@ -211,8 +227,9 @@ public class ProfileFragment extends Fragment {
             startActivity(intent);
         });
 
-        menuPaymentMethod.setOnClickListener(v -> {
-            Intent intent = new Intent(requireContext(), PaymentMethodActivity.class);
+        menuDeliveryAddress.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), DeliveryAddressActivity.class);
+            intent.putExtra(DeliveryAddressActivity.EXTRA_MODE, DeliveryAddressActivity.MODE_PROFILE);
             startActivity(intent);
         });
 

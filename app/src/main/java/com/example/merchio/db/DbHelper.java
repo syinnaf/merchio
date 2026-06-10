@@ -928,16 +928,16 @@ public class DbHelper extends SQLiteOpenHelper {
         );
     }
 
-    public Cursor getAddressesByUserId(int userId) {
-        return getAddressesByUser(userId);
-    }
-
     public Cursor getAddressById(int addressId) {
-        SQLiteDatabase db = this.getReadableDatabase();
+
+        SQLiteDatabase db =
+                getReadableDatabase();
 
         return db.rawQuery(
-                "SELECT * FROM addresses WHERE id = ?",
-                new String[]{String.valueOf(addressId)}
+                "SELECT * FROM addresses WHERE id=?",
+                new String[]{
+                        String.valueOf(addressId)
+                }
         );
     }
 

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    android:background="@drawable/bg_settings_card"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tvRecipient"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Nama Penerima"
+        android:textColor="@color/merchio_text_primary"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvPhone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="08123456789"
+        android:textColor="@color/merchio_text_secondary"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/tvFullAddress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Alamat lengkap"
+        android:textColor="@color/merchio_text_primary"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/tvDefaultBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_profile_menu"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="4dp"
+        android:text="DEFAULT"
+        android:textColor="@color/merchio_primary"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_edit"
+            android:layout_width="0dp"
+            android:layout_height="42dp"
+            android:layout_weight="1"
+            android:text="Edit"
+            android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/btn_default"
+            android:layout_width="0dp"
+            android:layout_height="42dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:text="Set Default"
+            android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/btn_select"
+            android:layout_width="0dp"
+            android:layout_height="42dp"
+            android:layout_weight="1"
+            android:text="Select"
+            android:textAllCaps="false"/>
+    </LinearLayout>
+
+</LinearLayout>

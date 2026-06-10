@@ -112,7 +112,7 @@
             android:textSize="14sp" />
 
         <TextView
-            android:id="@+id/menu_payment_method"
+            android:id="@+id/menu_delivery_address"
             android:layout_width="match_parent"
             android:layout_height="50dp"
             android:layout_marginStart="20dp"
@@ -121,7 +121,7 @@
             android:background="@drawable/bg_profile_menu"
             android:gravity="center_vertical"
             android:paddingStart="18dp"
-            android:text="Payment Method"
+            android:text="Delivery Address"
             android:textColor="#111111"
             android:textSize="14sp" />
 
