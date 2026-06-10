@@ -21,7 +21,7 @@ import com.example.merchio.SessionManager;
 import com.example.merchio.db.DbHelper;
 import com.example.merchio.SettingsActivity;
 import com.example.merchio.PurchaseHistoryActivity;
-import com.example.merchio.PaymentMethodActivity;
+import com.example.merchio.DeliveryAddressActivity;
 import com.example.merchio.CustomerServiceActivity;
 
 public class ProfileFragment extends Fragment {
@@ -29,7 +29,7 @@ public class ProfileFragment extends Fragment {
     private ImageView imgHeader, imgAvatar;
     private TextView tvName, tvUsername;
     private TextView tvPackingCount, tvShippingCount, tvDeliveredCount;
-    private TextView menuPurchaseHistory, menuPaymentMethod, menuSetting, menuCustomerService;
+    private TextView menuPurchaseHistory, menuDeliveryAddress, menuSetting, menuCustomerService;
 
     private DbHelper dbHelper;
     private SessionManager sessionManager;
@@ -80,7 +80,7 @@ public class ProfileFragment extends Fragment {
         tvDeliveredCount = view.findViewById(R.id.tv_delivered_count);
 
         menuPurchaseHistory = view.findViewById(R.id.menu_purchase_history);
-        menuPaymentMethod = view.findViewById(R.id.menu_payment_method);
+        menuDeliveryAddress = view.findViewById(R.id.menu_delivery_address);
         menuSetting = view.findViewById(R.id.menu_setting);
         menuCustomerService = view.findViewById(R.id.menu_customer_service);
     }
@@ -175,8 +175,18 @@ public class ProfileFragment extends Fragment {
             startActivity(intent);
         });
 
-        menuPaymentMethod.setOnClickListener(v -> {
-            Intent intent = new Intent(requireContext(), PaymentMethodActivity.class);
+        menuDeliveryAddress.setOnClickListener(v -> {
+            Intent intent =
+                    new Intent(
+                            requireContext(),
+                            DeliveryAddressActivity.class
+                    );
+
+            intent.putExtra(
+                    DeliveryAddressActivity.EXTRA_MODE,
+                    DeliveryAddressActivity.MODE_PROFILE
+            );
+
             startActivity(intent);
         });
 

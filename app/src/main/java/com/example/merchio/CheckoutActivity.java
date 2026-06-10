@@ -5,11 +5,14 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -28,23 +31,24 @@ public class CheckoutActivity extends AppCompatActivity {
 
     private RecyclerView rvCheckout;
 
-    private TextView txtAddress,
-            txtSubtotal,
-            txtShipping,
-            txtTax,
-            txtTotal;
+    private TextView txtAddress;
+    private TextView txtSubtotal;
+    private TextView txtShipping;
+    private TextView txtTax;
+    private TextView txtTotal;
+    private TextView btnBack;
 
-    private RadioButton rbExpress,
-            rbStandard,
-            rbBank,
-            rbDana,
-            rbGopay,
-            rbShopeePay,
-            rbCod;
+    private RadioButton rbExpress;
+    private RadioButton rbStandard;
+    private RadioButton rbBank;
+    private RadioButton rbDana;
+    private RadioButton rbGopay;
+    private RadioButton rbShopeePay;
+    private RadioButton rbCod;
 
     private RadioGroup rgPaymentCheckout;
-
     private Button btnBuy;
+    private LinearLayout cardAddress;
 
     private DbHelper dbHelper;
     private SessionManager sessionManager;
@@ -52,7 +56,6 @@ public class CheckoutActivity extends AppCompatActivity {
     private final List<CartItem> checkoutItems = new ArrayList<>();
 
     private boolean isBuyNow = false;
-
     private int userId = -1;
 
     private int subtotal = 0;
@@ -60,8 +63,25 @@ public class CheckoutActivity extends AppCompatActivity {
     private int tax = 0;
     private int total = 0;
 
-    private int addressId = 0;
+    private int addressId = -1;
+    private int selectedAddressId = -1;
     private String fullAddress = "";
+
+    private final ActivityResultLauncher<Intent> addressLauncher =
+            registerForActivityResult(
+                    new ActivityResultContracts.StartActivityForResult(),
+                    result -> {
+                        if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                            int returnedAddressId = result.getData().getIntExtra("selected_address_id", -1);
+                            if (returnedAddressId != -1) {
+                                loadSelectedAddress(returnedAddressId);
+                                return;
+                            }
+                        }
+
+                        loadAddress();
+                    }
+            );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,19 +92,12 @@ public class CheckoutActivity extends AppCompatActivity {
         initHelpers();
 
         if (userId == -1) {
-            Toast.makeText(
-                    this,
-                    "User belum login",
-                    Toast.LENGTH_SHORT
-            ).show();
-
+            Toast.makeText(this, "User belum login", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        rvCheckout.setLayoutManager(
-                new LinearLayoutManager(this)
-        );
+        rvCheckout.setLayoutManager(new LinearLayoutManager(this));
 
         loadAddress();
         loadDefaultPayment();
@@ -99,10 +112,15 @@ public class CheckoutActivity extends AppCompatActivity {
 
         setupShipping();
 
+        btnBack.setOnClickListener(v -> finish());
         btnBuy.setOnClickListener(v -> processOrder());
+
+        cardAddress.setOnClickListener(v -> openAddressPicker());
     }
 
     private void initViews() {
+        btnBack = findViewById(R.id.btn_back);
+
         rvCheckout = findViewById(R.id.rvCheckout);
 
         txtAddress = findViewById(R.id.txtAddress);
@@ -122,6 +140,7 @@ public class CheckoutActivity extends AppCompatActivity {
         rbCod = findViewById(R.id.rbCod);
 
         btnBuy = findViewById(R.id.btnBuy);
+        cardAddress = findViewById(R.id.cardAddress);
 
         rbExpress.setChecked(true);
     }
@@ -130,6 +149,12 @@ public class CheckoutActivity extends AppCompatActivity {
         dbHelper = new DbHelper(this);
         sessionManager = new SessionManager(this);
         userId = sessionManager.getUserId();
+    }
+
+    private void openAddressPicker() {
+        Intent intent = new Intent(this, DeliveryAddressActivity.class);
+        intent.putExtra(DeliveryAddressActivity.EXTRA_MODE, DeliveryAddressActivity.MODE_CHECKOUT);
+        addressLauncher.launch(intent);
     }
 
     private void loadDefaultPayment() {
@@ -206,7 +231,8 @@ public class CheckoutActivity extends AppCompatActivity {
         Cursor cursor = dbHelper.getDefaultAddress(userId);
 
         if (cursor != null && cursor.moveToFirst()) {
-            addressId = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
+            selectedAddressId = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
+            addressId = selectedAddressId;
 
             String recipient = cursor.getString(cursor.getColumnIndexOrThrow("recipient_name"));
             String phone = cursor.getString(cursor.getColumnIndexOrThrow("phone"));
@@ -214,17 +240,44 @@ public class CheckoutActivity extends AppCompatActivity {
             String city = cursor.getString(cursor.getColumnIndexOrThrow("city"));
             String postal = cursor.getString(cursor.getColumnIndexOrThrow("postal_code"));
 
-            fullAddress =
-                    recipient + "\n"
-                            + phone + "\n"
-                            + address + ", "
-                            + city + " "
-                            + postal;
+            fullAddress = recipient + "\n"
+                    + phone + "\n"
+                    + address + ", "
+                    + city + " "
+                    + postal;
 
             txtAddress.setText(fullAddress);
-
         } else {
+            selectedAddressId = -1;
+            addressId = -1;
             fullAddress = "Alamat demo Merchio\nJakarta, Indonesia";
+            txtAddress.setText(fullAddress);
+        }
+
+        if (cursor != null) {
+            cursor.close();
+        }
+    }
+
+    private void loadSelectedAddress(int selectedId) {
+        Cursor cursor = dbHelper.getAddressById(selectedId);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            selectedAddressId = selectedId;
+            addressId = selectedId;
+
+            String recipient = cursor.getString(cursor.getColumnIndexOrThrow("recipient_name"));
+            String phone = cursor.getString(cursor.getColumnIndexOrThrow("phone"));
+            String address = cursor.getString(cursor.getColumnIndexOrThrow("address"));
+            String city = cursor.getString(cursor.getColumnIndexOrThrow("city"));
+            String postal = cursor.getString(cursor.getColumnIndexOrThrow("postal_code"));
+
+            fullAddress = recipient + "\n"
+                    + phone + "\n"
+                    + address + ", "
+                    + city + " "
+                    + postal;
+
             txtAddress.setText(fullAddress);
         }
 
@@ -251,7 +304,6 @@ public class CheckoutActivity extends AppCompatActivity {
             item.setType(cursor.getString(cursor.getColumnIndexOrThrow("type")));
 
             checkoutItems.add(item);
-
             subtotal += item.getProductPrice() * item.getQuantity();
         }
 
@@ -291,11 +343,7 @@ public class CheckoutActivity extends AppCompatActivity {
 
     private void processOrder() {
         if (checkoutItems.isEmpty()) {
-            Toast.makeText(
-                    this,
-                    "Cart kosong",
-                    Toast.LENGTH_SHORT
-            ).show();
+            Toast.makeText(this, "Cart kosong", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -304,12 +352,8 @@ public class CheckoutActivity extends AppCompatActivity {
         }
 
         String paymentMethod = getSelectedPaymentMethod();
-
-        String shippingMethod =
-                rbExpress.isChecked() ? "Express" : "Standard";
-
-        String estimatedArrival =
-                rbExpress.isChecked() ? "1-2 Days" : "4-5 Days";
+        String shippingMethod = rbExpress.isChecked() ? "Express" : "Standard";
+        String estimatedArrival = rbExpress.isChecked() ? "1-2 Days" : "4-5 Days";
 
         long orderId;
 
@@ -327,7 +371,6 @@ public class CheckoutActivity extends AppCompatActivity {
                     tax,
                     estimatedArrival
             );
-
         } else {
             orderId = dbHelper.checkoutFromCart(
                     userId,
@@ -348,23 +391,13 @@ public class CheckoutActivity extends AppCompatActivity {
 
             startActivity(intent);
             finish();
-
         } else {
-            Toast.makeText(
-                    this,
-                    "Order gagal, coba lagi",
-                    Toast.LENGTH_SHORT
-            ).show();
+            Toast.makeText(this, "Order gagal, coba lagi", Toast.LENGTH_SHORT).show();
         }
     }
 
     private String rupiah(int amount) {
-        NumberFormat format =
-                NumberFormat.getCurrencyInstance(
-                        new Locale("id", "ID")
-                );
-
-        return format.format(amount)
-                .replace(",00", "");
+        NumberFormat format = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
+        return format.format(amount).replace(",00", "");
     }
 }
