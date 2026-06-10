@@ -46,69 +46,6 @@
                     android:src="@drawable/logo_merchio"/>
             </LinearLayout>
 
-            <!-- SEARCH + FILTER BUTTON -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="24dp">
-
-                <EditText
-                    android:id="@+id/etSearch"
-                    android:layout_width="0dp"
-                    android:layout_height="50dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_search"
-                    android:hint="Searches"
-                    android:paddingStart="16dp"
-                    android:drawablePadding="8dp"
-                    android:drawableStart="@drawable/ic_search"
-                    android:textSize="14sp"/>
-
-                <!-- Filter button wrapped in FrameLayout for badge support -->
-                <FrameLayout
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:layout_marginStart="12dp">
-
-                    <ImageButton
-                        android:id="@+id/btnFilter"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:background="@drawable/bg_filter"
-                        android:src="@drawable/ic_filter"
-                        android:contentDescription="Filter"/>
-
-                    <!-- Active filter badge (shown when filters are applied) -->
-                    <View
-                        android:id="@+id/viewFilterBadge"
-                        android:layout_width="10dp"
-                        android:layout_height="10dp"
-                        android:layout_gravity="top|end"
-                        android:layout_margin="4dp"
-                        android:background="#FF4444"
-                        android:visibility="gone"/>
-
-                </FrameLayout>
-            </LinearLayout>
-
-            <!-- ACTIVE FILTER SUMMARY (visible when filter applied) -->
-            <HorizontalScrollView
-                android:id="@+id/scroll_active_filters"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:scrollbars="none"
-                android:visibility="gone">
-
-                <LinearLayout
-                    android:id="@+id/ll_active_filters"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"/>
-            </HorizontalScrollView>
-
             <!-- GREETING -->
             <TextView
                 android:id="@+id/tvGreeting"
