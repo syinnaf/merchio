@@ -1,6 +1,8 @@
 package com.example.merchio.fragments;
 
+import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -9,20 +11,21 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.content.Intent;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
+import com.example.merchio.CustomerServiceActivity;
+import com.example.merchio.PaymentMethodActivity;
+import com.example.merchio.PurchaseHistoryActivity;
 import com.example.merchio.R;
 import com.example.merchio.SessionManager;
-import com.example.merchio.db.DbHelper;
 import com.example.merchio.SettingsActivity;
-import com.example.merchio.PurchaseHistoryActivity;
-import com.example.merchio.PaymentMethodActivity;
-import com.example.merchio.CustomerServiceActivity;
+import com.example.merchio.db.DbHelper;
 
 public class ProfileFragment extends Fragment {
 
@@ -35,7 +38,19 @@ public class ProfileFragment extends Fragment {
     private SessionManager sessionManager;
     private int userId = -1;
 
+    private String currentAvatar = "";
+    private String currentHeader = "";
+
+    private ActivityResultLauncher<String[]> avatarPickerLauncher;
+    private ActivityResultLauncher<String[]> headerPickerLauncher;
+
     public ProfileFragment() {
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        registerImagePickers();
     }
 
     @Nullable
@@ -52,10 +67,10 @@ public class ProfileFragment extends Fragment {
         loadUserProfile();
         loadOrderSummary();
         setupMenuClicks();
+        setupImageClicks();
 
         return view;
     }
-
 
     @Override
     public void onResume() {
@@ -66,6 +81,50 @@ public class ProfileFragment extends Fragment {
             loadUserProfile();
             loadOrderSummary();
         }
+    }
+
+    private void registerImagePickers() {
+        avatarPickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.OpenDocument(),
+                uri -> {
+                    if (uri == null || dbHelper == null || userId == -1) {
+                        return;
+                    }
+
+                    persistImagePermission(uri);
+                    currentAvatar = uri.toString();
+
+                    boolean success = dbHelper.updateUserAvatar(userId, currentAvatar);
+
+                    if (success) {
+                        showImage(currentAvatar, imgAvatar);
+                        Toast.makeText(requireContext(), "Foto profil berhasil diupload", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(requireContext(), "Foto profil gagal diupload", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
+
+        headerPickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.OpenDocument(),
+                uri -> {
+                    if (uri == null || dbHelper == null || userId == -1) {
+                        return;
+                    }
+
+                    persistImagePermission(uri);
+                    currentHeader = uri.toString();
+
+                    boolean success = dbHelper.updateUserHeader(userId, currentHeader);
+
+                    if (success) {
+                        showImage(currentHeader, imgHeader);
+                        Toast.makeText(requireContext(), "Banner profil berhasil diupload", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(requireContext(), "Banner profil gagal diupload", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
     }
 
     private void initViews(View view) {
@@ -87,6 +146,7 @@ public class ProfileFragment extends Fragment {
 
     private void initHelpers() {
         dbHelper = new DbHelper(requireContext());
+        dbHelper.ensureUserImageColumnsExist();
         sessionManager = new SessionManager(requireContext());
         userId = sessionManager.getUserId();
     }
@@ -95,6 +155,8 @@ public class ProfileFragment extends Fragment {
         if (userId == -1) {
             tvName.setText("Guest");
             tvUsername.setText("@guest");
+            imgAvatar.setImageResource(R.drawable.logo_merchio);
+            imgHeader.setImageResource(R.drawable.logo_merchio);
             return;
         }
 
@@ -104,8 +166,8 @@ public class ProfileFragment extends Fragment {
             String name = cursor.getString(cursor.getColumnIndexOrThrow("name"));
             String username = cursor.getString(cursor.getColumnIndexOrThrow("username"));
             String email = cursor.getString(cursor.getColumnIndexOrThrow("email"));
-            String avatar = cursor.getString(cursor.getColumnIndexOrThrow("avatar"));
-            String header = cursor.getString(cursor.getColumnIndexOrThrow("header"));
+            currentAvatar = cursor.getString(cursor.getColumnIndexOrThrow("avatar"));
+            currentHeader = cursor.getString(cursor.getColumnIndexOrThrow("header"));
 
             tvName.setText(!TextUtils.isEmpty(name) ? name : "Merchio User");
 
@@ -115,19 +177,8 @@ public class ProfileFragment extends Fragment {
                 tvUsername.setText(email);
             }
 
-            if (!TextUtils.isEmpty(avatar)) {
-                Glide.with(requireContext())
-                        .load(avatar)
-                        .placeholder(R.drawable.logo_merchio)
-                        .into(imgAvatar);
-            }
-
-            if (!TextUtils.isEmpty(header)) {
-                Glide.with(requireContext())
-                        .load(header)
-                        .placeholder(R.drawable.logo_merchio)
-                        .into(imgHeader);
-            }
+            showImage(currentAvatar, imgAvatar);
+            showImage(currentHeader, imgHeader);
         }
 
         cursor.close();
@@ -147,21 +198,6 @@ public class ProfileFragment extends Fragment {
 
         setOrderSummary(packing, shipping, delivered);
     }
-
-//    private void loadOrderSummary() {
-//        if (userId == -1) {
-//            setOrderSummary(0, 0, 0);
-//            return;
-//        }
-//
-//        int packing = dbHelper.getOrderCountByStatus(userId, "packing");
-//        int shipping = dbHelper.getOrderCountByStatus(userId, "shipping")
-//                + dbHelper.getOrderCountByStatus(userId, "shipped")
-//                + dbHelper.getOrderCountByStatus(userId, "in_transit");
-//        int delivered = dbHelper.getOrderCountByStatus(userId, "delivered");
-//
-//        setOrderSummary(packing, shipping, delivered);
-//    }
 
     private void setOrderSummary(int packing, int shipping, int delivered) {
         tvPackingCount.setText(packing + "\nPacking");
@@ -189,5 +225,50 @@ public class ProfileFragment extends Fragment {
             Intent intent = new Intent(requireContext(), CustomerServiceActivity.class);
             startActivity(intent);
         });
+    }
+
+    private void setupImageClicks() {
+        imgAvatar.setOnClickListener(v -> {
+            if (userId == -1) {
+                Toast.makeText(requireContext(), "Login dulu untuk upload foto profil", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            avatarPickerLauncher.launch(new String[]{"image/*"});
+        });
+
+        imgHeader.setOnClickListener(v -> {
+            if (userId == -1) {
+                Toast.makeText(requireContext(), "Login dulu untuk upload banner", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            headerPickerLauncher.launch(new String[]{"image/*"});
+        });
+    }
+
+    private void persistImagePermission(Uri uri) {
+        try {
+            requireContext().getContentResolver().takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+            );
+        } catch (SecurityException ignored) {
+        }
+    }
+
+    private void showImage(String imageUri, ImageView target) {
+        if (target == null) {
+            return;
+        }
+
+        if (TextUtils.isEmpty(imageUri)) {
+            target.setImageResource(R.drawable.logo_merchio);
+            return;
+        }
+
+        Glide.with(requireContext())
+                .load(imageUri)
+                .placeholder(R.drawable.logo_merchio)
+                .error(R.drawable.logo_merchio)
+                .into(target);
     }
 }

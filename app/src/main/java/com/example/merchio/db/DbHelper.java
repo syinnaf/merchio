@@ -17,7 +17,7 @@ import java.util.Locale;
 public class DbHelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "merchio.db";
-    public static final int DATABASE_VERSION = 5;
+    public static final int DATABASE_VERSION = 6;
 
     public static final String STATUS_PACKING = "packing";
     public static final String STATUS_SHIPPING = "shipping";
@@ -219,6 +219,18 @@ public class DbHelper extends SQLiteOpenHelper {
             } catch (Exception ignored) {
             }
         }
+
+        if (oldVersion < 6) {
+            try {
+                db.execSQL("ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT ''");
+            } catch (Exception ignored) {
+            }
+
+            try {
+                db.execSQL("ALTER TABLE users ADD COLUMN header TEXT DEFAULT ''");
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     private void dropAllTables(SQLiteDatabase db) {
@@ -299,6 +311,7 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     public Cursor getUserById(int userId) {
+        ensureUserImageColumnsExist();
         SQLiteDatabase db = this.getReadableDatabase();
 
         return db.rawQuery(
@@ -377,6 +390,36 @@ public class DbHelper extends SQLiteOpenHelper {
 
         if (!activeExists) {
             db.execSQL("ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1");
+        }
+    }
+
+    public void ensureUserImageColumnsExist() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery("PRAGMA table_info(users)", null);
+
+        boolean avatarExists = false;
+        boolean headerExists = false;
+
+        while (cursor.moveToNext()) {
+            String columnName = cursor.getString(cursor.getColumnIndexOrThrow("name"));
+
+            if ("avatar".equals(columnName)) {
+                avatarExists = true;
+            }
+
+            if ("header".equals(columnName)) {
+                headerExists = true;
+            }
+        }
+
+        cursor.close();
+
+        if (!avatarExists) {
+            db.execSQL("ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT ''");
+        }
+
+        if (!headerExists) {
+            db.execSQL("ALTER TABLE users ADD COLUMN header TEXT DEFAULT ''");
         }
     }
 
@@ -467,6 +510,7 @@ public class DbHelper extends SQLiteOpenHelper {
             String avatar,
             String header
     ) {
+        ensureUserImageColumnsExist();
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
@@ -474,6 +518,40 @@ public class DbHelper extends SQLiteOpenHelper {
         values.put("username", username);
         values.put("phone", phone);
         values.put("avatar", avatar);
+        values.put("header", header);
+
+        int result = db.update(
+                "users",
+                values,
+                "id = ?",
+                new String[]{String.valueOf(userId)}
+        );
+
+        return result > 0;
+    }
+
+    public boolean updateUserAvatar(int userId, String avatar) {
+        ensureUserImageColumnsExist();
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put("avatar", avatar);
+
+        int result = db.update(
+                "users",
+                values,
+                "id = ?",
+                new String[]{String.valueOf(userId)}
+        );
+
+        return result > 0;
+    }
+
+    public boolean updateUserHeader(int userId, String header) {
+        ensureUserImageColumnsExist();
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
         values.put("header", header);
 
         int result = db.update(

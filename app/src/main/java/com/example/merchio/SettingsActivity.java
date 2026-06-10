@@ -5,13 +5,9 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.ImageView;
-import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
-import android.content.Intent;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 
 import com.bumptech.glide.Glide;
 import com.example.merchio.db.DbHelper;
@@ -19,15 +15,12 @@ import com.example.merchio.db.DbHelper;
 public class SettingsActivity extends AppCompatActivity {
 
     private TextView btnBack, tvName, tvUsername;
-    private TextView menuPersonalInfo, menuPayment, menuPush, menuLogout;
+    private TextView menuPersonalInfo, menuPayment, menuLogout;
     private ImageView imgAvatar;
-    private Switch switchDarkMode;
 
     private DbHelper dbHelper;
     private SessionManager sessionManager;
     private int userId = -1;
-
-    private boolean isInitializingSwitch = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,8 +30,13 @@ public class SettingsActivity extends AppCompatActivity {
         initViews();
         initHelpers();
         loadUserData();
-        loadDarkMode();
         setupClicks();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadUserData();
     }
 
     private void initViews() {
@@ -49,14 +47,12 @@ public class SettingsActivity extends AppCompatActivity {
 
         menuPersonalInfo = findViewById(R.id.menu_personal_info);
         menuPayment = findViewById(R.id.menu_payment);
-        menuPush = findViewById(R.id.menu_push);
         menuLogout = findViewById(R.id.menu_logout);
-
-        switchDarkMode = findViewById(R.id.switch_dark_mode);
     }
 
     private void initHelpers() {
         dbHelper = new DbHelper(this);
+        dbHelper.ensureUserImageColumnsExist();
         sessionManager = new SessionManager(this);
         userId = sessionManager.getUserId();
     }
@@ -65,6 +61,7 @@ public class SettingsActivity extends AppCompatActivity {
         if (userId == -1) {
             tvName.setText("Guest");
             tvUsername.setText("@guest");
+            imgAvatar.setImageResource(R.drawable.logo_merchio);
             return;
         }
 
@@ -88,22 +85,14 @@ public class SettingsActivity extends AppCompatActivity {
                 Glide.with(this)
                         .load(avatar)
                         .placeholder(R.drawable.logo_merchio)
+                        .error(R.drawable.logo_merchio)
                         .into(imgAvatar);
+            } else {
+                imgAvatar.setImageResource(R.drawable.logo_merchio);
             }
         }
 
         cursor.close();
-    }
-
-    private void loadDarkMode() {
-        if (userId == -1) {
-            return;
-        }
-
-        isInitializingSwitch = true;
-        boolean darkMode = dbHelper.getDarkModeSetting(userId);
-        switchDarkMode.setChecked(darkMode);
-        isInitializingSwitch = false;
     }
 
     private void setupClicks() {
@@ -117,23 +106,6 @@ public class SettingsActivity extends AppCompatActivity {
         menuPayment.setOnClickListener(v -> {
             Intent intent = new Intent(SettingsActivity.this, PaymentMethodActivity.class);
             startActivity(intent);
-        });
-        menuPush.setOnClickListener(v ->
-                Toast.makeText(this, "Demo doang", Toast.LENGTH_SHORT).show()
-        );
-
-        switchDarkMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isInitializingSwitch || userId == -1) {
-                return;
-            }
-
-            dbHelper.saveDarkModeSetting(userId, isChecked);
-
-            AppCompatDelegate.setDefaultNightMode(
-                    isChecked
-                            ? AppCompatDelegate.MODE_NIGHT_YES
-                            : AppCompatDelegate.MODE_NIGHT_NO
-            );
         });
 
         menuLogout.setOnClickListener(v -> {
