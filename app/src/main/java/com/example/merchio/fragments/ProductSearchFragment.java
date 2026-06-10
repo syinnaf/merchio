@@ -11,6 +11,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,21 +28,40 @@ import com.example.merchio.R;
 import com.example.merchio.SessionManager;
 import com.example.merchio.adapters.ProductAdapter;
 import com.example.merchio.db.DbHelper;
+import com.example.merchio.models.Category;
 import com.example.merchio.models.Product;
 import com.google.android.flexbox.FlexboxLayout;
 import com.example.merchio.api.ApiClient;
 import com.example.merchio.api.ApiService;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class ProductSearchFragment extends Fragment {
 
+    public static final String ARG_CATEGORY = "arg_category";
+    public static final String ARG_SORT     = "arg_sort";
+
+    // Gunakan konstanta dari FilterBottomSheetFragment agar nilai sort sinkron
+    private static final int SORT_DEFAULT    = FilterBottomSheetFragment.SORT_DEFAULT;
+    private static final int SORT_POPULAR    = FilterBottomSheetFragment.SORT_POPULAR;
+    private static final int SORT_PRICE_ASC  = FilterBottomSheetFragment.SORT_PRICE_ASC;
+    private static final int SORT_PRICE_DESC = FilterBottomSheetFragment.SORT_PRICE_DESC;
+    private static final int SORT_NAME_AZ    = FilterBottomSheetFragment.SORT_NAME_AZ;
+
     private EditText etSearch;
     private LinearLayout layoutRecentSearches, layoutEmpty;
+    private LinearLayout layoutFilterSort;
+    private HorizontalScrollView scrollCategories;
+
+    private LinearLayout llCategories;
+    private LinearLayout layoutSortContainer;
     private FlexboxLayout flexboxRecent;
     private TextView btnClearAll;
     private RecyclerView rvProducts;
@@ -49,11 +70,18 @@ public class ProductSearchFragment extends Fragment {
 
     private final List<Product> allProducts = new ArrayList<>();
     private final List<Product> filteredProducts = new ArrayList<>();
+    private final List<Category> categories = new ArrayList<>();
+
+    private String selectedCategory = null;
+    private int selectedSort = SORT_DEFAULT;
 
     private DbHelper dbHelper;
     private SessionManager sessionManager;
     private ApiService apiService;
     private int userId;
+
+    private String pendingCategoryFromHome = null; // tidak digunakan lagi, dihapus di iterasi berikut
+    private int    pendingSortFromHome     = SORT_DEFAULT; // tidak digunakan lagi
 
     @Nullable
     @Override
@@ -70,6 +98,15 @@ public class ProductSearchFragment extends Fragment {
 
         super.onViewCreated(view, savedInstanceState);
 
+        // Baca filter dari HomeFragment langsung ke selectedCategory/selectedSort
+        // SEBELUM buildSortChips() dan fetchCategories() dipanggil,
+        // sehingga chip langsung dibangun dengan state yang benar.
+        Bundle args = getArguments();
+        if (args != null) {
+            selectedCategory = args.getString(ARG_CATEGORY, null);
+            selectedSort     = args.getInt(ARG_SORT, SORT_DEFAULT);
+        }
+
         // INIT VIEW
         etSearch = view.findViewById(R.id.et_search);
         layoutRecentSearches = view.findViewById(R.id.layout_recent_searches);
@@ -77,6 +114,10 @@ public class ProductSearchFragment extends Fragment {
         flexboxRecent = view.findViewById(R.id.flexbox_recent);
         btnClearAll = view.findViewById(R.id.btn_clear_all);
         rvProducts = view.findViewById(R.id.rv_products);
+        layoutFilterSort = view.findViewById(R.id.layout_filter_sort);
+        scrollCategories = view.findViewById(R.id.scroll_categories);
+        llCategories = view.findViewById(R.id.ll_categories);
+        layoutSortContainer = view.findViewById(R.id.layout_sort_container);
 
         // INIT DB & SESSION
         dbHelper = new DbHelper(requireContext());
@@ -170,9 +211,14 @@ public class ProductSearchFragment extends Fragment {
 
         rvProducts.setAdapter(productAdapter);
 
-        fetchProducts();
+        buildSortChips();
 
-        // TAMPILKAN RECENT SEARCH
+        // Jika ada filter dari home, langsung tampilkan bar filter
+        if (selectedCategory != null || selectedSort != SORT_DEFAULT) {
+            layoutFilterSort.setVisibility(View.VISIBLE);
+        }
+
+        fetchCategories();
         showRecentSearches();
 
         // SEARCH ACTION
@@ -186,8 +232,7 @@ public class ProductSearchFragment extends Fragment {
                     dbHelper.addRecentSearch(userId, keyword);
                 }
 
-                filterProducts(keyword);
-
+                applyFilters();
                 return true;
             }
 
@@ -212,17 +257,11 @@ public class ProductSearchFragment extends Fragment {
                 String keyword = s.toString().trim();
 
                 if (keyword.isEmpty()) {
-
                     showRecentSearches();
-
-                    filterProducts("");
-
                 } else {
-
                     layoutRecentSearches.setVisibility(View.GONE);
-
-                    filterProducts(keyword);
                 }
+                applyFilters();
             }
 
             @Override
@@ -237,6 +276,32 @@ public class ProductSearchFragment extends Fragment {
             flexboxRecent.removeAllViews();
 
             layoutRecentSearches.setVisibility(View.GONE);
+        });
+    }
+
+    private void fetchCategories() {
+        apiService.getCategories().enqueue(new Callback<List<Category>>() {
+
+            @Override
+            public void onResponse(Call<List<Category>> call,
+                                   Response<List<Category>> response) {
+                if (!isAdded()) return;
+
+                if (response.isSuccessful() && response.body() != null) {
+                    categories.clear();
+                    categories.addAll(response.body());
+                }
+
+                buildCategoryChips();
+                fetchProducts();
+            }
+
+            @Override
+            public void onFailure(Call<List<Category>> call, Throwable t) {
+                if (!isAdded()) return;
+                buildCategoryChips();
+                fetchProducts();
+            }
         });
     }
 
@@ -256,17 +321,10 @@ public class ProductSearchFragment extends Fragment {
                 }
 
                 if (response.isSuccessful() && response.body() != null) {
-                    List<Product> apiProducts = response.body();
-
                     allProducts.clear();
-                    allProducts.addAll(apiProducts);
+                    allProducts.addAll(response.body());
 
-                    filteredProducts.clear();
-                    filteredProducts.addAll(apiProducts);
-
-                    productAdapter.updateList(filteredProducts);
-
-                    checkEmpty();
+                    applyFilters();
 
                 } else {
                     Toast.makeText(
@@ -299,36 +357,206 @@ public class ProductSearchFragment extends Fragment {
         });
     }
 
-    // =========================================================
-    // FILTER PRODUCTS
-    // =========================================================
+    private void buildCategoryChips() {
+        llCategories.removeAllViews();
 
-    private void filterProducts(String keyword) {
+        // "Semua" chip
+        addCategoryChip("Semua", null);
 
-        filteredProducts.clear();
+        for (Category cat : categories) {
+            addCategoryChip(cat.getName(), cat.getName());
+        }
+    }
 
-        if (keyword.isEmpty()) {
+    private void addCategoryChip(String label, String categoryValue) {
+        TextView chip = new TextView(requireContext());
 
-            filteredProducts.addAll(allProducts);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(0, 0, 12, 0);
+        chip.setLayoutParams(params);
 
+        chip.setText(label);
+        chip.setTextSize(13f);
+        chip.setPadding(36, 16, 36, 16);
+        chip.setTag(categoryValue);  // null for "Semua"
+
+        updateCategoryChipStyle(chip,
+                (categoryValue == null && selectedCategory == null)
+                        || (categoryValue != null && categoryValue.equals(selectedCategory))
+        );
+
+        chip.setOnClickListener(v -> {
+            selectedCategory = (String) chip.getTag();
+
+            // Update all chip styles
+            for (int i = 0; i < llCategories.getChildCount(); i++) {
+                View child = llCategories.getChildAt(i);
+                if (child instanceof TextView) {
+                    String tag = (String) child.getTag();
+                    boolean isSelected = (tag == null && selectedCategory == null)
+                            || (tag != null && tag.equals(selectedCategory));
+                    updateCategoryChipStyle((TextView) child, isSelected);
+                }
+            }
+
+            applyFilters();
+        });
+
+        llCategories.addView(chip);
+    }
+
+    private void updateCategoryChipStyle(TextView chip, boolean selected) {
+        GradientDrawable bg = new GradientDrawable();
+        bg.setShape(GradientDrawable.RECTANGLE);
+        bg.setCornerRadius(60f);
+
+        if (selected) {
+            bg.setColor(0xFF8B6DFF);
+            chip.setTextColor(0xFFFFFFFF);
         } else {
+            bg.setColor(0xFFF4F1FF);
+            chip.setTextColor(0xFF555555);
+        }
 
-            String lower = keyword.toLowerCase();
+        chip.setBackground(bg);
+    }
 
-            for (Product p : allProducts) {
+    private void highlightCategoryChip(String categoryName) {
+        for (int i = 0; i < llCategories.getChildCount(); i++) {
+            View child = llCategories.getChildAt(i);
+            if (child instanceof TextView) {
+                String tag = (String) child.getTag();
+                boolean match = (categoryName == null && tag == null)
+                        || (categoryName != null && categoryName.equals(tag));
+                updateCategoryChipStyle((TextView) child, match);
+            }
+        }
+    }
 
-                if (safeLower(p.getName()).contains(lower)
-                        || safeLower(p.getCategoryName()).contains(lower)
-                        || safeLower(p.getBrand()).contains(lower)) {
-
-                    filteredProducts.add(p);
-
+    private void highlightSortChip(int sortValue) {
+        for (int i = 0; i < layoutSortContainer.getChildCount(); i++) {
+            View child = layoutSortContainer.getChildAt(i);
+            if (child instanceof TextView) {
+                Object tag = child.getTag();
+                if (tag instanceof Integer) {
+                    updateSortChipStyle((TextView) child, (int) tag == sortValue);
                 }
             }
         }
+    }
+
+    private void buildSortChips() {
+        layoutSortContainer.removeAllViews();
+
+        // Urutan label harus sesuai dengan nilai konstanta (0=Default,1=Terlaris,2=Termurah,3=Termahal,4=A-Z)
+        String[] sortLabels = {"Default", "Terlaris", "Termurah", "Termahal", "A-Z"};
+        int[]    sortValues = {SORT_DEFAULT, SORT_POPULAR, SORT_PRICE_ASC, SORT_PRICE_DESC, SORT_NAME_AZ};
+
+        for (int i = 0; i < sortLabels.length; i++) {
+            final int sortVal = sortValues[i];
+            TextView chip = new TextView(requireContext());
+
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            params.setMargins(0, 0, 10, 0);
+            chip.setLayoutParams(params);
+
+            chip.setText(sortLabels[i]);
+            chip.setTextSize(12f);
+            chip.setPadding(28, 12, 28, 12);
+            chip.setTag(sortVal);
+
+            updateSortChipStyle(chip, sortVal == selectedSort);
+
+            chip.setOnClickListener(v -> {
+                selectedSort = sortVal;
+
+                for (int j = 0; j < layoutSortContainer.getChildCount(); j++) {
+                    View child = layoutSortContainer.getChildAt(j);
+                    if (child instanceof TextView) {
+                        int tag = (int) child.getTag();
+                        updateSortChipStyle((TextView) child, tag == selectedSort);
+                    }
+                }
+
+                applyFilters();
+            });
+
+            layoutSortContainer.addView(chip);
+        }
+    }
+
+    private void updateSortChipStyle(TextView chip, boolean selected) {
+        GradientDrawable bg = new GradientDrawable();
+        bg.setShape(GradientDrawable.RECTANGLE);
+        bg.setCornerRadius(50f);
+
+        if (selected) {
+            bg.setColor(0xFF2457FF);
+            chip.setTextColor(0xFFFFFFFF);
+        } else {
+            bg.setColor(0xFFEEF0FF);
+            chip.setTextColor(0xFF555577);
+        }
+
+        chip.setBackground(bg);
+    }
+
+    private void applyFilters() {
+        String keyword = etSearch != null
+                ? etSearch.getText().toString().trim().toLowerCase()
+                : "";
+
+        filteredProducts.clear();
+
+        for (Product p : allProducts) {
+
+            // 1. Category filter
+            if (selectedCategory != null
+                    && !selectedCategory.equalsIgnoreCase(safeLower(p.getCategoryName()))) {
+                continue;
+            }
+
+            // 2. Keyword filter
+            if (!keyword.isEmpty()) {
+                boolean match = safeLower(p.getName()).contains(keyword)
+                        || safeLower(p.getCategoryName()).contains(keyword)
+                        || safeLower(p.getBrand()).contains(keyword);
+                if (!match) continue;
+            }
+
+            filteredProducts.add(p);
+        }
+
+        // 3. Sort
+        switch (selectedSort) {
+            case SORT_PRICE_ASC:
+                Collections.sort(filteredProducts,
+                        (a, b) -> Integer.compare(a.getPrice(), b.getPrice()));
+                break;
+            case SORT_PRICE_DESC:
+                Collections.sort(filteredProducts,
+                        (a, b) -> Integer.compare(b.getPrice(), a.getPrice()));
+                break;
+            case SORT_POPULAR:
+                Collections.sort(filteredProducts,
+                        (a, b) -> Integer.compare(b.getSoldCount(), a.getSoldCount()));
+                break;
+            case SORT_NAME_AZ:
+                Collections.sort(filteredProducts,
+                        (a, b) -> safeLower(a.getName()).compareTo(safeLower(b.getName())));
+                break;
+            default:
+                // SORT_DEFAULT: keep API order
+                break;
+        }
 
         productAdapter.updateList(filteredProducts);
-
         checkEmpty();
     }
 
@@ -438,7 +666,7 @@ public class ProductSearchFragment extends Fragment {
 
             layoutRecentSearches.setVisibility(View.GONE);
 
-            filterProducts(keyword);
+            applyFilters();
         });
 
         flexboxRecent.addView(chip);
