@@ -77,12 +77,6 @@
                     android:text="Category"
                     android:textSize="24sp"
                     android:textStyle="bold"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="See All >"
-                    android:textSize="16sp"/>
             </LinearLayout>
 
             <!-- CATEGORY LIST -->
