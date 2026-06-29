@@ -17,7 +17,7 @@ import java.util.Locale;
 public class DbHelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "merchio.db";
-    public static final int DATABASE_VERSION = 6;
+    public static final int DATABASE_VERSION = 7;
 
     public static final String STATUS_PACKING = "packing";
     public static final String STATUS_SHIPPING = "shipping";
@@ -229,6 +229,50 @@ public class DbHelper extends SQLiteOpenHelper {
             try {
                 db.execSQL("ALTER TABLE users ADD COLUMN header TEXT DEFAULT ''");
             } catch (Exception ignored) {
+            }
+        }
+
+        if (oldVersion < 7) {
+            ensureOrderAddressColumns(db);
+        }
+    }
+
+    @Override
+    public void onOpen(SQLiteDatabase db) {
+        super.onOpen(db);
+        ensureOrderAddressColumns(db);
+    }
+
+    private void ensureOrderAddressColumns(SQLiteDatabase db) {
+        addColumnIfMissing(db, "orders", "shipping_price", "INTEGER DEFAULT 0");
+        addColumnIfMissing(db, "orders", "tax", "INTEGER DEFAULT 0");
+        addColumnIfMissing(db, "orders", "payment_method", "TEXT DEFAULT ''");
+        addColumnIfMissing(db, "orders", "shipping_method", "TEXT DEFAULT ''");
+        addColumnIfMissing(db, "orders", "address_id", "INTEGER DEFAULT -1");
+        addColumnIfMissing(db, "orders", "address", "TEXT DEFAULT ''");
+        addColumnIfMissing(db, "orders", "estimated_arrival", "TEXT DEFAULT ''");
+        addColumnIfMissing(db, "orders", "is_received", "INTEGER DEFAULT 0");
+    }
+
+    private void addColumnIfMissing(SQLiteDatabase db, String tableName, String columnName, String columnDefinition) {
+        Cursor cursor = null;
+
+        try {
+            cursor = db.rawQuery("PRAGMA table_info(" + tableName + ")", null);
+
+            while (cursor != null && cursor.moveToNext()) {
+                String existingColumn = cursor.getString(cursor.getColumnIndexOrThrow("name"));
+
+                if (columnName.equalsIgnoreCase(existingColumn)) {
+                    return;
+                }
+            }
+
+            db.execSQL("ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + columnDefinition);
+        } catch (Exception ignored) {
+        } finally {
+            if (cursor != null) {
+                cursor.close();
             }
         }
     }

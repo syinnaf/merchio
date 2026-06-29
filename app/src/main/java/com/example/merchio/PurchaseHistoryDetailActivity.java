@@ -99,88 +99,42 @@ public class PurchaseHistoryDetailActivity
         Cursor cursor =
                 dbHelper.getOrderById(orderId);
 
-        if(cursor.moveToFirst()){
+        if(cursor != null && cursor.moveToFirst()){
 
-            String orderCode =
-                    cursor.getString(
-                            cursor.getColumnIndexOrThrow(
-                                    "order_code"
-                            )
-                    );
+            String orderCode = getStringColumn(cursor, "order_code", "MRC" + orderId);
+            String estimatedArrival = getStringColumn(cursor, "estimated_arrival", "-");
+            String paymentMethod = getStringColumn(cursor, "payment_method", "-");
+            String shippingMethod = getStringColumn(cursor, "shipping_method", "-");
+            String savedAddress = getStringColumn(cursor, "address", "");
+            int savedAddressId = getIntColumn(cursor, "address_id", -1);
 
-            String estimatedArrival =
-                    cursor.getString(
-                            cursor.getColumnIndexOrThrow(
-                                    "estimated_arrival"
-                            )
-                    );
-
-            String paymentMethod =
-                    cursor.getString(
-                            cursor.getColumnIndexOrThrow(
-                                    "payment_method"
-                            )
-                    );
-
-            txtPaymentMethod.setText(paymentMethod);
-
-            int shipping =
-                    cursor.getInt(
-                            cursor.getColumnIndexOrThrow(
-                                    "shipping_price"
-                            )
-                    );
-
-            int tax =
-                    cursor.getInt(
-                            cursor.getColumnIndexOrThrow(
-                                    "tax"
-                            )
-                    );
-
-            int total =
-                    cursor.getInt(
-                            cursor.getColumnIndexOrThrow(
-                                    "total_price"
-                            )
-                    );
-
+            int shipping = getIntColumn(cursor, "shipping_price", 0);
+            int tax = getIntColumn(cursor, "tax", 0);
+            int total = getIntColumn(cursor, "total_price", 0);
             int subtotal = total - shipping - tax;
 
-            txtOrderCode.setText(
-                    "#" + orderCode
-            );
+            if(savedAddress == null || savedAddress.trim().isEmpty()){
+                savedAddress = buildAddressTextFromAddressId(savedAddressId);
+            }
 
-            txtEstimatedArrival.setText(
-                    estimatedArrival
-            );
+            if(savedAddress == null || savedAddress.trim().isEmpty()){
+                savedAddress = "Alamat belum tersedia";
+            }
 
-            txtSubtotal.setText(
-                    rupiah(subtotal)
-            );
-
-            txtShipping.setText(
-                    rupiah(shipping)
-            );
-
-            txtTax.setText(
-                    rupiah(tax)
-            );
-
-            txtTotal.setText(
-                    rupiah(total)
-            );
-
-            txtShippingMethod.setText(
-                    "Express"
-            );
-
-            txtAddress.setText(
-                    "Customer Address"
-            );
+            txtOrderCode.setText("#" + orderCode);
+            txtEstimatedArrival.setText(estimatedArrival);
+            txtPaymentMethod.setText(paymentMethod);
+            txtShippingMethod.setText(shippingMethod);
+            txtAddress.setText(savedAddress);
+            txtSubtotal.setText(rupiah(subtotal));
+            txtShipping.setText(rupiah(shipping));
+            txtTax.setText(rupiah(tax));
+            txtTotal.setText(rupiah(total));
         }
 
-        cursor.close();
+        if(cursor != null){
+            cursor.close();
+        }
     }
 
     private void loadOrderItems(){
@@ -251,63 +205,9 @@ public class PurchaseHistoryDetailActivity
             }while(cursor.moveToNext());
         }
 
-        if(cursor != null && cursor.moveToFirst()){
-
-            CartItem item =
-                    new CartItem();
-
-            item.setProductId(
-                    cursor.getString(
-                            cursor.getColumnIndexOrThrow(
-                                    "product_id"
-                            )
-                    )
-            );
-
-            item.setProductName(
-                    cursor.getString(
-                            cursor.getColumnIndexOrThrow(
-                                    "product_name"
-                            )
-                    )
-            );
-
-            item.setProductImage(
-                    cursor.getString(
-                            cursor.getColumnIndexOrThrow(
-                                    "product_image"
-                            )
-                    )
-            );
-
-            item.setProductPrice(
-                    cursor.getInt(
-                            cursor.getColumnIndexOrThrow(
-                                    "price"
-                            )
-                    )
-            );
-
-            item.setQuantity(
-                    cursor.getInt(
-                            cursor.getColumnIndexOrThrow(
-                                    "quantity"
-                            )
-                    )
-            );
-
-            item.setType(
-                    cursor.getString(
-                            cursor.getColumnIndexOrThrow(
-                                    "type"
-                            )
-                    )
-            );
-
-            itemList.add(item);
+        if(cursor != null){
+            cursor.close();
         }
-
-        cursor.close();
 
         rvOrderItems.setLayoutManager(
                 new LinearLayoutManager(this)
@@ -321,6 +221,92 @@ public class PurchaseHistoryDetailActivity
                         itemList
                 )
         );
+    }
+
+    private String buildAddressTextFromAddressId(int addressId){
+        if(addressId == -1){
+            return "";
+        }
+
+        Cursor addressCursor = null;
+
+        try{
+            addressCursor = dbHelper.getAddressById(addressId);
+
+            if(addressCursor != null && addressCursor.moveToFirst()){
+                String recipient = getStringColumn(addressCursor, "recipient_name", "");
+                String phone = getStringColumn(addressCursor, "phone", "");
+                String address = getStringColumn(addressCursor, "address", "");
+                String city = getStringColumn(addressCursor, "city", "");
+                String postalCode = getStringColumn(addressCursor, "postal_code", "");
+
+                StringBuilder builder = new StringBuilder();
+
+                appendLine(builder, recipient);
+                appendLine(builder, phone);
+
+                StringBuilder addressLine = new StringBuilder();
+                appendInline(addressLine, address);
+                appendInline(addressLine, city);
+                appendInline(addressLine, postalCode);
+
+                appendLine(builder, addressLine.toString());
+
+                return builder.toString().trim();
+            }
+
+        }finally{
+            if(addressCursor != null){
+                addressCursor.close();
+            }
+        }
+
+        return "";
+    }
+
+    private void appendLine(StringBuilder builder, String value){
+        if(value == null || value.trim().isEmpty()){
+            return;
+        }
+
+        if(builder.length() > 0){
+            builder.append("\n");
+        }
+
+        builder.append(value.trim());
+    }
+
+    private void appendInline(StringBuilder builder, String value){
+        if(value == null || value.trim().isEmpty()){
+            return;
+        }
+
+        if(builder.length() > 0){
+            builder.append(", ");
+        }
+
+        builder.append(value.trim());
+    }
+
+    private String getStringColumn(Cursor cursor, String columnName, String fallback){
+        int index = cursor.getColumnIndex(columnName);
+
+        if(index == -1 || cursor.isNull(index)){
+            return fallback;
+        }
+
+        String value = cursor.getString(index);
+        return value == null ? fallback : value;
+    }
+
+    private int getIntColumn(Cursor cursor, String columnName, int fallback){
+        int index = cursor.getColumnIndex(columnName);
+
+        if(index == -1 || cursor.isNull(index)){
+            return fallback;
+        }
+
+        return cursor.getInt(index);
     }
 
     private String rupiah(int amount){
