@@ -28,7 +28,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
     private final OnCategoryClickListener listener;
 
     // Tracks which category is currently selected
-    private int selectedPosition = 0;
+    private int selectedPosition = -1;
 
     public CategoryAdapter(Context context, List<Category> categories, OnCategoryClickListener listener) {
         this.context = context;
@@ -61,8 +61,6 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
 
         // Highlight the selected category
         boolean isSelected = position == selectedPosition;
-        holder.itemView.setSelected(isSelected);
-        holder.txtCategoryName.setSelected(isSelected);
 
         holder.itemView.setOnClickListener(v -> {
             int prev = selectedPosition;
